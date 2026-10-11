@@ -201,11 +201,18 @@ public class NoIpSentTest
 			assertFalse(s, s.contains("your IP address"));
 			assertTrue(s, s.contains("never stored") || s.contains("never stores IP addresses"));
 		}
+		// The short README (the Plugin Hub page) and the full write-up in docs/TECHNICAL.md.
 		String readme = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("README.md")),
 			java.nio.charset.StandardCharsets.UTF_8);
-		assertTrue(readme.contains("> " + warning + "."));
-		assertFalse(readme.contains("reveal your IP address"));
-		assertFalse(readme.contains("expose your IP address"));
-		assertTrue(readme.contains("never stores, hashes or logs it"));
+		String technical = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("docs", "TECHNICAL.md")),
+			java.nio.charset.StandardCharsets.UTF_8);
+		assertTrue(readme.contains("never stores IP addresses"));
+		assertTrue(technical.contains("> " + warning + "."));
+		assertTrue(technical.contains("never stores, hashes or logs it"));
+		for (String doc : new String[]{readme, technical})
+		{
+			assertFalse(doc.contains("reveal your IP address"));
+			assertFalse(doc.contains("expose your IP address"));
+		}
 	}
 }

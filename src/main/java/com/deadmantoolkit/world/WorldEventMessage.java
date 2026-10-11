@@ -44,7 +44,9 @@ public class WorldEventMessage
 	/** Longest place text kept; the game's are far shorter. */
 	public static final int MAX_LOCATION = 80;
 
-	private static final String VERB = "has\\s+(?:spawned|appeared|opened|emerged)\\s+(?:at|in|on|near|inside|by)\\s+";
+	/** "spawned at north of the Grand Exchange", but also "spawned throughout Zanaris". */
+	private static final String VERB = "has\\s+(?:spawned|appeared|opened|emerged)\\s+"
+		+ "(?:at|in|on|near|inside|by|throughout|across|around|within)\\s+";
 	private static final Pattern CHEST = Pattern.compile(
 		"\\ba\\s+deadman'?s\\s+chest\\s+" + VERB + "(.+?)\\s*[!.]*\\s*$", Pattern.CASE_INSENSITIVE);
 	private static final Pattern BREACH = Pattern.compile("\\ba\\s+breach\\s+" + VERB, Pattern.CASE_INSENSITIVE);

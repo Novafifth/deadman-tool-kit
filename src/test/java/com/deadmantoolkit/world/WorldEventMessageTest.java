@@ -56,6 +56,17 @@ public class WorldEventMessageTest
 	}
 
 	@Test
+	public void breachThroughoutAPlace()
+	{
+		// Seen live on world 345 (2026-10-11).
+		WorldEventMessage m = parse("@mes_hl_pur@A breach has spawned throughout Zanaris! Powerful monsters now roam the area"
+			+ " (Single).</col>");
+		assertEquals(Kind.BREACH, m.getKind());
+		assertEquals("Zanaris", m.getLocation());
+		assertEquals(Combat.SINGLE, m.getCombat());
+	}
+
+	@Test
 	public void otherMessagesAreIgnored()
 	{
 		assertFalse(WorldEventMessage.parse("The next breach will appear in 2 hours, 5 minutes.").isPresent());

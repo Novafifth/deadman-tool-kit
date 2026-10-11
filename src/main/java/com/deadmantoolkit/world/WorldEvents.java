@@ -14,8 +14,8 @@ import lombok.Value;
  * off its :00 / :15 marks.
  * <ul>
  * <li>One chest at a time: a new chest replaces the last one, which otherwise stays listed {@link #CHEST_LIFE}.</li>
- * <li>Breaches come in waves of several; each lasts {@link #BREACH_LIFE} (15 minutes spawning, then up to 30 more until
- * the monsters left despawn).</li>
+ * <li>Breaches come in waves of several; each is listed {@link #BREACH_LIFE}: its 15 minutes of spawning, then
+ * {@link #AFTER_SPAWN} more (the monsters left can stay up to 30 minutes, but by then the breach is over).</li>
  * <li>The same event reported again (the broadcast repeated, or the server's copy of one seen here) within
  * {@link #SAME} is one event: the earliest time wins, and a sighting here wins over the server's.</li>
  * </ul>
@@ -23,7 +23,9 @@ import lombok.Value;
  */
 public final class WorldEvents
 {
-	public static final Duration BREACH_LIFE = BreachSchedule.SPAWN.plus(BreachSchedule.DESPAWN);
+	/** How long a breach stays listed after its spawning ends. */
+	static final Duration AFTER_SPAWN = Duration.ofMinutes(5);
+	public static final Duration BREACH_LIFE = BreachSchedule.SPAWN.plus(AFTER_SPAWN);
 	/** A chest is soon looted: it is listed this long after its broadcast (or until the next chest). */
 	public static final Duration CHEST_LIFE = Duration.ofMinutes(10);
 	/** Reports of one event this far apart (or less) are the same event. */

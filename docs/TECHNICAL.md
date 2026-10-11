@@ -90,8 +90,7 @@ Warriors' Guild!"). The plugin reads those broadcasts and:
 - with *Hint arrow to the chest* on, keeps the hint arrow on the current chest when its spot is known.
 
 Times come from the broadcast itself, not the clock: the game is up to a minute or so off :00 / :15. A chest stays
-listed for 10 minutes (it's soon looted) or until the next one, a breach for 45 minutes (15 spawning, 30 until the
-rest despawn).
+listed for 10 minutes (it's soon looted) or until the next one, a breach for 20 minutes (15 spawning, then 5 more).
 
 **Where is it?** Broadcasts name a place, not coordinates. The plugin matches the text against a list of places
 (`world-places.json`: towns, guilds, landmarks, Wilderness spots, plus kingdoms and regions), ignoring case and
