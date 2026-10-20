@@ -92,6 +92,20 @@ public class WorldLocationsTest
 	}
 
 	@Test
+	public void theGamesOwnNamesForPlaces()
+	{
+		// Seen live: "A Deadman's Chest has spawned at within the Fremennik Slayer Cave!" (it used to land on the
+		// Fremennik region, the only name the matcher found in it) and "... at at the Tasakaal entrance!".
+		Resolved r = loc.resolve("within the Fremennik Slayer Cave");
+		assertEquals("Fremennik Slayer Dungeon", r.getPlace());
+		assertEquals(Accuracy.EXACT, r.getAccuracy());
+		assertEquals(new WorldPoint(2797, 3615, 0), r.getPoint());
+		r = loc.resolve("at the Tasakaal entrance");
+		assertEquals("Karuulm Slayer Dungeon", r.getPlace());
+		assertEquals(Accuracy.EXACT, r.getAccuracy());
+	}
+
+	@Test
 	public void otherMapsHaveASurfaceEntrance()
 	{
 		Resolved r = loc.resolve("Zanaris");

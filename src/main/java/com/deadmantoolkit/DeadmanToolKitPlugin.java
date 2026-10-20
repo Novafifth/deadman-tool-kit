@@ -92,7 +92,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 @PluginDescriptor(
 	name = "Deadman Tool Kit",
-	description = "Tracks your own Grand Exchange trades on Deadman world 345 (offers vs market, profit, buy limits) and marks breach and Deadman's Chest broadcasts on the world map and minimap. Once you connect (off by default), your trades and the broadcasts you see are sent to a 3rd-party server to build a shared world 345 price index (it never stores IP addresses). Only when you ask, it imports the trade history RuneLite's own Grand Exchange plugin keeps for your account.",
+	description = "GE prices, profit tracking and breach / chest map markers for Deadman world 345 (opt-in price sharing)",
 	tags = {"deadman", "dmm", "grand exchange", "ge", "prices", "trade", "history", "flipping", "breach", "chest"},
 	internalName = "deadman-tool-kit"
 )

@@ -186,8 +186,13 @@ public class NoIpSentTest
 			.getAnnotation(net.runelite.client.config.ConfigItem.class);
 		assertEquals(warning, item.warning());
 
+		// The Connect setting says what is shared and that IPs are never stored.
+		assertFalse(item.description().contains("your IP address"));
+		assertTrue(item.description(), item.description().contains("never stored")
+			|| item.description().contains("never stores IP addresses"));
+
+		// The one-line plugin descriptions (Plugin Hub list and tooltip) stay short, but say sharing is opt-in.
 		List<String> ours = new ArrayList<>();
-		ours.add(item.description());
 		ours.add(DeadmanToolKitPlugin.class.getAnnotation(net.runelite.client.plugins.PluginDescriptor.class)
 			.description());
 		java.util.Properties props = new java.util.Properties();
@@ -199,7 +204,8 @@ public class NoIpSentTest
 		for (String s : ours)
 		{
 			assertFalse(s, s.contains("your IP address"));
-			assertTrue(s, s.contains("never stored") || s.contains("never stores IP addresses"));
+			assertTrue(s, s.contains("opt-in"));
+			assertTrue(s, s.length() <= 120);
 		}
 		// The short README (the Plugin Hub page) and the full write-up in docs/TECHNICAL.md.
 		String readme = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("README.md")),
