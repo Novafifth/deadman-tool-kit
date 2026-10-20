@@ -103,6 +103,10 @@ public class WorldLocationsTest
 		r = loc.resolve("at the Tasakaal entrance");
 		assertEquals("Karuulm Slayer Dungeon", r.getPlace());
 		assertEquals(Accuracy.EXACT, r.getAccuracy());
+		// "... at within the Chicken Shrine!": in Zanaris, near its original entrance.
+		r = loc.resolve("within the Chicken Shrine");
+		assertEquals("Chicken Shrine", r.getPlace());
+		assertEquals(Accuracy.EXACT, r.getAccuracy());
 	}
 
 	@Test

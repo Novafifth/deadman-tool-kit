@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 1792502381,
+  "revision": 1792534700,
   "about": "Places a Deadman world event broadcast can name. x/y are world tiles (plane 0 unless given); radius is how far a place spreads in tiles (default 8). Places on another map (Zanaris, the Mole Hole) give their surface entrance. Regions are kingdoms and areas a broadcast names instead of a spot. Names and aliases match ignoring case, apostrophes and punctuation, and must be unique. revision is the unix time of the last change (the newest copy wins: the plugin's bundled copy, its saved copy or the server's). wording: words dropped from the front (leads) or end (tails) of a place before matching.",
   "wording": {
     "leads": ["throughout", "within", "surrounding", "on top of", "the top of", "top of", "the mounds at", "the mounds of", "mounds at", "the mounds", "around", "near", "nearby", "just outside", "outside", "inside", "somewhere in", "deep in", "the outskirts of", "outskirts of", "the area around", "the area near", "the area of", "the area", "area of", "the ruins at", "in", "at", "on", "by", "the"],
@@ -261,6 +261,7 @@
     {"name": "Volcanic Mine", "area": "Tirannwn and islands", "x": 3815, "y": 3810},
     {"name": "Prifddinas", "area": "Tirannwn and islands", "x": 3260, "y": 6080, "radius": 30, "entrance": {"name": "Arandar", "x": 2370, "y": 3280}, "aliases": ["prif"]},
     {"name": "Zanaris", "area": "Other maps", "x": 2412, "y": 4434, "radius": 25, "entrance": {"name": "Lumbridge Swamp shed", "x": 3202, "y": 3169}, "aliases": ["lost city"]},
+    {"name": "Chicken Shrine", "area": "Other maps", "x": 2454, "y": 4477, "entrance": {"name": "Lumbridge Swamp shed", "x": 3202, "y": 3169}},
     {"name": "Mole Hole", "area": "Other maps", "x": 1760, "y": 5191, "radius": 12, "entrance": {"name": "Falador Park", "x": 2995, "y": 3375}, "aliases": ["giant mole", "mole lair"]},
     {"name": "East of the Wilderness Bandit Camp", "area": "Deadman chests", "x": 3052, "y": 3671, "radius": 2},
     {"name": "Outside the Al Kharid bank", "area": "Deadman chests", "x": 3273, "y": 3160, "radius": 2},
