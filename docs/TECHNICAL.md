@@ -21,7 +21,8 @@ how to build and test it. For the short overview, see the [README](../README.md)
     you placed the offer (never GE History rows, whose time is only when they were imported);
   - "Profit": your realized profit today, over the last 7 days and all time, and your best items (see
     [Profit](#profit));
-  - a market feed and a "My trades" list (50 rows at a time, with "Show more"), each with a refresh button and
+  - a market feed (each item's latest live trade, one row per item; both sides of one trade between two plugin
+    users show as one "Traded" row) and a "My trades" list (50 rows at a time, with "Show more"), each with a refresh button and
     when it was last updated (or, after a failed refresh, why, e.g. "Update failed: server unreachable"; the old data
     stays);
   - an item view with your open offers for the item, stats, a price chart (24h / 7d / 30d / 90d / 1y), the
@@ -193,8 +194,8 @@ in the settings. Both ask you to confirm this warning first:
 > This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers.
 
 While connected, the panel reads market data from the server (`v1/recent` with
-`kinds=fill,history,imported`, `v1/item/{id}`, `v1/item/{id}/series`, all with `world=345`; the feed lists other
-players' imported trades only while their own time is within the last 24 hours, labelled "imported"), the GE offer
+`kinds=fill`, `v1/item/{id}`, `v1/item/{id}/series`, all with `world=345`; the feed lists live fills only, while
+GE History rows and imported trades show in the item views), the GE offer
 setup line reads `v1/item/{id}` for the item you are setting up (cached for 30 seconds), and while you have open offers on world 345 their item ids are checked with
 `v1/items?ids=...` at most once a minute while the side panel is open or offer notifications are on (and when you
 press refresh or open the panel, at most every 10 seconds). Like any
