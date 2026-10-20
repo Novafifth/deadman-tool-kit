@@ -8,19 +8,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
-/** The Market feed lists completed trades only; an item's recent trades never list offer placements. */
+/** The Market feed lists live fills only; an item's recent trades never list offer placements. */
 public class FeedFilterTest
 {
 	private final Gson gson = new Gson();
 
 	@Test
-	public void marketShowsFillsAndHistoryOnly()
+	public void marketShowsLiveFillsOnly()
 	{
 		MarketData.Recent r = gson.fromJson("{\"events\":[{\"id\":1,\"kind\":\"placed\"},{\"id\":2,\"kind\":\"fill\"},"
-			+ "{\"id\":3,\"kind\":\"cancelled\"},{\"id\":4,\"kind\":\"history\"},{\"id\":5}]}", MarketData.Recent.class);
-		List<Long> ids = FeedMerge.completedTrades(r.getEvents()).stream().map(MarketData.FeedEvent::getId)
+			+ "{\"id\":3,\"kind\":\"cancelled\"},{\"id\":4,\"kind\":\"history\"},{\"id\":5,\"kind\":\"imported\"},{\"id\":6}]}",
+			MarketData.Recent.class);
+		List<Long> ids = FeedMerge.liveFills(r.getEvents()).stream().map(MarketData.FeedEvent::getId)
 			.collect(Collectors.toList());
-		assertEquals(Arrays.asList(2L, 4L), ids);
+		assertEquals(Arrays.asList(2L), ids);
 	}
 
 	@Test
@@ -34,11 +35,8 @@ public class FeedFilterTest
 	}
 
 	@Test
-	public void importedTradesAreTrades()
+	public void importedTradesAreTradesInTheItemView()
 	{
-		MarketData.Recent r = gson.fromJson("{\"events\":[{\"id\":1,\"kind\":\"imported\"},{\"id\":2,\"kind\":\"placed\"}]}",
-			MarketData.Recent.class);
-		assertEquals(1, FeedMerge.completedTrades(r.getEvents()).size());
 		MarketData.ItemDetail d = gson.fromJson("{\"trades\":[{\"kind\":\"imported\",\"qty\":5},{\"kind\":\"placed\",\"qty\":1}]}",
 			MarketData.ItemDetail.class);
 		assertEquals(1, ItemView.recentTrades(d.getTrades()).size());

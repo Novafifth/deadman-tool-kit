@@ -28,7 +28,7 @@ final class FeedMerge
 	 * @param incoming the response's events (any order, may include non-trades from servers that ignore kinds)
 	 * @param afterId  the id the request asked for events after, or 0 for a full load
 	 * @param limit    the request's limit; a full page of only newer events may mean events were skipped
-	 * @return completed trades only, de-duplicated by id, newest (highest id) first, at most {@code cap}
+	 * @return live fills only, de-duplicated by id, newest (highest id) first, at most {@code cap}
 	 */
 	static List<MarketData.FeedEvent> merge(List<MarketData.FeedEvent> current, List<MarketData.FeedEvent> incoming,
 		long afterId, int limit, int cap)
@@ -40,7 +40,7 @@ final class FeedMerge
 		}
 		// Incoming wins on equal ids: it is the server's latest view of that event.
 		addAll(byId, incoming);
-		List<MarketData.FeedEvent> out = completedTrades(byId.values());
+		List<MarketData.FeedEvent> out = liveFills(byId.values());
 		out.sort((a, b) -> Long.compare(b.getId(), a.getId()));
 		return out.size() > cap ? new ArrayList<>(out.subList(0, cap)) : out;
 	}
@@ -72,15 +72,16 @@ final class FeedMerge
 	}
 
 	/**
-	 * Only completed trades (fills and GE History rows). Offers placed or cancelled aren't trades and were misread as
-	 * purchases. The request already asks the server for these kinds; older servers ignore that, so filter here too.
+	 * Only live fills. Offers placed or cancelled aren't trades and were misread as purchases; GE History rows and
+	 * imported records are old trades with no real time ({@link com.deadmantoolkit.MarketClient#RECENT_KINDS}). The
+	 * request already asks the server for fills only; older servers ignore that, so filter here too.
 	 */
-	static List<MarketData.FeedEvent> completedTrades(Collection<MarketData.FeedEvent> events)
+	static List<MarketData.FeedEvent> liveFills(Collection<MarketData.FeedEvent> events)
 	{
 		List<MarketData.FeedEvent> trades = new ArrayList<>();
 		for (MarketData.FeedEvent e : events)
 		{
-			if (TradeEvent.isTrade(e.getKind()))
+			if (TradeEvent.FILL.equals(e.getKind()))
 			{
 				trades.add(e);
 			}

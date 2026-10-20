@@ -100,10 +100,11 @@ public class FeedMergeTest
 	}
 
 	@Test
-	public void nonTradesAreDropped()
+	public void onlyLiveFillsAreKept()
 	{
-		List<MarketData.FeedEvent> incoming = Arrays.asList(ev(4, "placed"), ev(3, "history"), ev(2, "cancelled"), ev(1));
-		assertEquals(Arrays.asList(3L, 1L), ids(FeedMerge.merge(Collections.emptyList(), incoming, 0, 60)));
+		List<MarketData.FeedEvent> incoming = Arrays.asList(ev(5, "imported"), ev(4, "placed"), ev(3, "history"),
+			ev(2, "cancelled"), ev(1));
+		assertEquals(Arrays.asList(1L), ids(FeedMerge.merge(Collections.emptyList(), incoming, 0, 60)));
 	}
 
 	@Test

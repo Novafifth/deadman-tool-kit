@@ -29,11 +29,11 @@ public class MarketClient
 	public static final int RECENT_LIMIT = 60;
 	private static final int ITEM_LIMIT = 40;
 	/**
-	 * The Market feed shows completed trades only: fills, GE History rows and imported RuneLite records (the server
-	 * lists an imported one only while its own time is within the last 24 hours). Older servers ignore unknown kinds
-	 * and this whole parameter; the panel filters too.
+	 * The Market feed shows live fills only. GE History rows and imported RuneLite records are old trades with no real
+	 * time, and a player's first connect sends dozens of them at once; they still count in the item views and prices.
+	 * Older servers ignore this parameter; the panel filters too.
 	 */
-	static final String RECENT_KINDS = TradeEvent.FILL + "," + TradeEvent.HISTORY + "," + TradeEvent.IMPORTED;
+	static final String RECENT_KINDS = TradeEvent.FILL;
 	/** Error messages passed to the {@code err} callbacks; {@link #shortReason} makes a status-line version. */
 	public static final String UNREACHABLE = "Can't reach the Deadman Tool Kit server.";
 	public static final String BAD_RESPONSE = "Unexpected server response.";

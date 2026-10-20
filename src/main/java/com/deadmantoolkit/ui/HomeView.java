@@ -45,7 +45,7 @@ class HomeView
 	/** "Updated Xs ago" plus the refresh button; only on the Market tab once it has data. */
 	private final JPanel updatedRow = new JPanel(new BorderLayout(4, 0));
 	private final JTextComponent message = (JTextComponent) wrapText("", ColorScheme.LIGHT_GRAY_COLOR);
-	private final RowList<MarketData.FeedEvent> marketList;
+	private final RowList<MarketRows.Row> marketList;
 	private final RowList<RowList.Keyed<TradeEvent>> mineList;
 	/** Shown on the My trades tab only: the "Import RuneLite GE history" link. */
 	private final JComponent mineExtra;
@@ -73,8 +73,8 @@ class HomeView
 	HomeView(ItemManager itemManager, JComponent welcome, JComponent offers, JComponent profit, Runnable onTab, Runnable onRefresh,
 		BiConsumer<Integer, String> onOpen, JComponent mineExtra)
 	{
-		marketList = new RowList<>(MarketData.FeedEvent::getId, e -> when(e.getKind(), feedTime(e)),
-			e -> row(itemManager, e.getItemId(), e.getName(), e.getKind(), e.getSide(), e.getQty(), e.getPrice(), feedTime(e), onOpen));
+		marketList = new RowList<>(r -> r.getEvent().getId(), r -> when(r.getEvent().getKind(), feedTime(r.getEvent())),
+			r -> marketRow(itemManager, r, onOpen));
 		marketList.setEmptyText("No trades yet.");
 		mineList = new RowList<>(k -> k.key, k -> when(k.value.getKind(), k.value.getTs()),
 			k -> row(itemManager, k.value.getItemId(), k.value.getName(), k.value.getKind(), k.value.getSide(),
@@ -138,6 +138,19 @@ class HomeView
 	private static long feedTime(MarketData.FeedEvent e)
 	{
 		return Format.feedTime(e.getKind(), e.getReceivedAt(), e.getTs());
+	}
+
+	/** A Market row: an item's latest trade, as one "Traded" row when both sides of it were reported. */
+	private static JComponent marketRow(ItemManager itemManager, MarketRows.Row r, BiConsumer<Integer, String> onOpen)
+	{
+		MarketData.FeedEvent e = r.getEvent();
+		if (!r.isBothSides())
+		{
+			return row(itemManager, e.getItemId(), e.getName(), e.getKind(), e.getSide(), e.getQty(), e.getPrice(),
+				feedTime(e), onOpen);
+		}
+		return tradeRow(itemManager, e.getItemId(), e.getName(), Format.traded(e.getQty(), e.getPrice()),
+			Format.whenTwoLine(e.getKind(), feedTime(e)), onOpen);
 	}
 
 	/** An item row; imported trades show their approximate age above "imported", and say so in the tooltip. */
@@ -224,7 +237,7 @@ class HomeView
 		tick();
 	}
 
-	/** Show the merged Market feed ({@link FeedMerge}), newest first. */
+	/** Show the merged Market feed ({@link FeedMerge}): each item's latest trade ({@link MarketRows}), newest first. */
 	void showMarket(MarketData.Stats s, List<MarketData.FeedEvent> events)
 	{
 		marketStats = s == null ? "" : "<html>" + s.getOpenBids() + " bids · " + s.getOpenAsks() + " asks open<br>"
@@ -234,7 +247,7 @@ class HomeView
 		message.setVisible(false);
 		mineList.getComponent().setVisible(false);
 		marketList.getComponent().setVisible(true);
-		marketList.setItems(events);
+		marketList.setItems(MarketRows.latestPerItem(events));
 		hasMarketData = true;
 		failed = null;
 		lastUpdated = System.currentTimeMillis();

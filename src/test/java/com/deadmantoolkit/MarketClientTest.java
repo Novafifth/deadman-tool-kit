@@ -41,7 +41,7 @@ public class MarketClientTest
 	}
 
 	@Test
-	public void recentAsksForCompletedTradesOnly() throws InterruptedException
+	public void recentAsksForLiveFillsOnly() throws InterruptedException
 	{
 		market().recent(0, r ->
 		{
@@ -50,7 +50,7 @@ public class MarketClientTest
 		});
 		Request req = next();
 		assertEquals("/v1/recent", req.url().encodedPath());
-		assertEquals("fill,history,imported", req.url().queryParameter("kinds"));
+		assertEquals("fill", req.url().queryParameter("kinds"));
 		assertEquals("345", req.url().queryParameter("world"));
 		assertEquals("60", req.url().queryParameter("limit"));
 		assertNull(req.url().queryParameter("after"));

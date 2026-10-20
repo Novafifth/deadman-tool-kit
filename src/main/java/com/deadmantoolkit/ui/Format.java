@@ -38,6 +38,12 @@ final class Format
 		}
 	}
 
+	/** One trade both sides of which were reported (two plugin users traded with each other). */
+	static String traded(int qty, long price)
+	{
+		return "Traded " + QuantityFormatter.formatNumber(qty) + " × " + QuantityFormatter.formatNumber(price);
+	}
+
 	/** Exact below 10m gp, stack format (e.g. 12.5M) above. "-" when unknown. */
 	static String gp(Long v)
 	{
