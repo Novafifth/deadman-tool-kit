@@ -15,7 +15,9 @@ public interface DeadmanToolKitConfig extends Config
 	String KEY_SHARE = "shareTrades";
 	String KEY_LOCAL_LOG = "saveLocalLog";
 	String KEY_AUTO_OPEN = "autoOpenFromGe";
+	String KEY_GE_SWITCH = "geSwitchPanel";
 	String KEY_BREACH = "showBreachTimer";
+	String KEY_ITEM_MENU = "itemMenuOption";
 	String KEY_STALE_HOURS = "staleHours";
 	String KEY_OFFER_NOTIFICATION = "offerNotification";
 	String KEY_SHARE_WORLD_EVENTS = "shareWorldEvents";
@@ -120,13 +122,39 @@ public interface DeadmanToolKitConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = KEY_BREACH,
-		name = "Show breach timer",
-		description = "Show the countdown to the next weekend breach at the top of the side panel",
+		keyName = KEY_GE_SWITCH,
+		name = "Switch to this panel for GE offers",
+		description = "With the setting above on: switch the sidebar to Deadman Tool Kit. Off: the item still opens in this"
+			+ " panel (ready when you switch to it), but whatever panel is open stays on top, e.g. another price plugin's",
 		position = 1,
 		section = SECTION_PANEL
 	)
+	default boolean geSwitchPanel()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = KEY_BREACH,
+		name = "Show breach timer",
+		description = "Show the countdown to the next weekend breach at the top of the side panel",
+		position = 2,
+		section = SECTION_PANEL
+	)
 	default boolean showBreachTimer()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = KEY_ITEM_MENU,
+		name = "Right-click \"DMM prices\"",
+		description = "Add \"DMM prices\" to the right-click menu of tradeable items on world 345 (opens the item in the side"
+			+ " panel)",
+		position = 3,
+		section = SECTION_PANEL
+	)
+	default boolean itemMenuOption()
 	{
 		return true;
 	}

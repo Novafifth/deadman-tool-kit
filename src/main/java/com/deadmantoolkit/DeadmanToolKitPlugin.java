@@ -683,7 +683,7 @@ public class DeadmanToolKitPlugin extends Plugin
 			lastGeItem = itemId;
 			if (config.autoOpenFromGe())
 			{
-				openInPanel(itemId);
+				openInPanel(itemId, config.geSwitchPanel());
 			}
 		}
 	}
@@ -997,12 +997,12 @@ public class DeadmanToolKitPlugin extends Plugin
 			.build());
 	}
 
-	/** Adds "DMM prices" to the right-click menu of tradeable items. */
+	/** Adds "DMM prices" to the right-click menu of tradeable items, unless turned off in the settings. */
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded e)
 	{
 		MenuEntry entry = e.getMenuEntry();
-		if (!"Examine".equals(e.getOption()) || entry.getItemId() <= 0 || !isTrackedWorld())
+		if (!"Examine".equals(e.getOption()) || entry.getItemId() <= 0 || !isTrackedWorld() || !config.itemMenuOption())
 		{
 			return;
 		}
@@ -1016,11 +1016,17 @@ public class DeadmanToolKitPlugin extends Plugin
 			.setOption(MENU_OPTION)
 			.setTarget(e.getTarget())
 			.setType(MenuAction.RUNELITE)
-			.onClick(me -> openInPanel(itemId));
+			.onClick(me -> openInPanel(itemId, true));
 	}
 
-	/** Must be called on the client thread. */
-	private void openInPanel(int itemId)
+	/**
+	 * Show an item in the side panel. Must be called on the client thread.
+	 *
+	 * @param switchTo switch the sidebar to this panel. When false the panel still follows (a hidden one loads the item
+	 *                 when it is next shown), but whatever panel is open stays on top, e.g. another price plugin's
+	 *                 following the same GE offer
+	 */
+	private void openInPanel(int itemId, boolean switchTo)
 	{
 		int id = itemManager.canonicalize(itemId);
 		String name = itemManager.getItemComposition(id).getName();
@@ -1033,7 +1039,10 @@ public class DeadmanToolKitPlugin extends Plugin
 				return;
 			}
 			p.openItem(id, name);
-			clientToolbar.openPanel(nav);
+			if (switchTo)
+			{
+				clientToolbar.openPanel(nav);
+			}
 		});
 	}
 

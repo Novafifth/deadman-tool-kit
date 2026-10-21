@@ -21,7 +21,9 @@ public class ConfigDefaultsTest
 		assertTrue(config.shareTrades());
 		assertTrue(config.saveLocalLog());
 		assertTrue(config.autoOpenFromGe());
+		assertTrue(config.geSwitchPanel());
 		assertTrue(config.showBreachTimer());
+		assertTrue(config.itemMenuOption());
 		assertEquals(6, config.staleHours());
 		assertSame(Notification.OFF, config.offerNotification());
 		assertTrue(config.shareWorldEvents());
@@ -40,7 +42,9 @@ public class ConfigDefaultsTest
 		assertEquals("shareTrades", DeadmanToolKitConfig.KEY_SHARE);
 		assertEquals("saveLocalLog", DeadmanToolKitConfig.KEY_LOCAL_LOG);
 		assertEquals("autoOpenFromGe", DeadmanToolKitConfig.KEY_AUTO_OPEN);
+		assertEquals("geSwitchPanel", DeadmanToolKitConfig.KEY_GE_SWITCH);
 		assertEquals("showBreachTimer", DeadmanToolKitConfig.KEY_BREACH);
+		assertEquals("itemMenuOption", DeadmanToolKitConfig.KEY_ITEM_MENU);
 		assertEquals("chatHintShown", DeadmanToolKitConfig.KEY_HINT_SHOWN);
 		assertEquals("staleHours", DeadmanToolKitConfig.KEY_STALE_HOURS);
 		assertEquals("offerNotification", DeadmanToolKitConfig.KEY_OFFER_NOTIFICATION);

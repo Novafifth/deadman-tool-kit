@@ -63,7 +63,9 @@ Under **Configuration > Deadman Tool Kit**, or the gear button in the panel.
 | Chests / Breaches on the map | On | Each kind of marker can be turned off |
 | Arrows on the minimap | On | Events on the minimap: at their spot when close, otherwise as an arrow on the rim |
 | Hint arrow to the chest | Off | Points the game's hint arrow at the chest |
+| Switch to this panel for GE offers | On | Off: the item still opens here, but whatever panel is open stays on top (handy with another price plugin) |
 | Show breach timer | On | The countdown at the top of the panel |
+| Right-click "DMM prices" | On | The menu option on tradeable items that opens them in the panel |
 
 ## Privacy
 

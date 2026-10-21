@@ -42,7 +42,7 @@ how to build and test it. For the short overview, see the [README](../README.md)
 - Marks the game's breach and Deadman's Chest broadcasts on the world map and minimap and lists them in the panel
   (see [World events](#world-events)).
 - Optionally notifies you when one of your offers gets undercut or outbid.
-- Adds a "DMM prices" right-click option on tradeable items.
+- Adds a "DMM prices" right-click option on tradeable items (*Right-click "DMM prices"* under Panel turns it off).
 - On your first login on world 345 it shows one chat message (only in your own chatbox) pointing at the panel.
 
 ## Settings
@@ -52,7 +52,9 @@ the panel):
 
 - **Data sharing**: *Connect to Deadman Tool Kit server* (off by default; shows the warning below when turned on)
   and *Share my trades* (on once connected).
-- **Panel**: *Open item when setting up a GE offer* and *Show breach timer* (both on by default).
+- **Panel**: *Open item when setting up a GE offer*, *Switch to this panel for GE offers* (off: the item still opens
+  in this panel, ready when you switch to it, but whatever panel is open stays on top), *Show breach timer* and *Right-click "DMM
+  prices"* (all on by default).
 - **Offer alerts**: *Flag offers with no fill for (hours)* (6 by default) and *Notify when undercut or outbid* (off by
   default; uses RuneLite's notification settings). The market checks need the connection.
 - **World events**: *Show breaches and chests*, *Chests on the map*, *Breaches on the map* and *Arrows on the
