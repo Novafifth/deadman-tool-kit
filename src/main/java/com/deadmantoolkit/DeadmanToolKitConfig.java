@@ -124,8 +124,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_GE_SWITCH,
 		name = "Switch to this panel for GE offers",
-		description = "With the setting above on: switch the sidebar to Deadman Tool Kit. Off: the item still opens in this"
-			+ " panel (ready when you switch to it), but whatever panel is open stays on top, e.g. another price plugin's",
+		description = "Off: the item still opens here, but the sidebar stays on the panel you have open",
 		position = 1,
 		section = SECTION_PANEL
 	)
@@ -149,8 +148,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_ITEM_MENU,
 		name = "Right-click \"DMM prices\"",
-		description = "Add \"DMM prices\" to the right-click menu of tradeable items on world 345 (opens the item in the side"
-			+ " panel)",
+		description = "Add \"DMM prices\" to the right-click menu of tradeable items",
 		position = 3,
 		section = SECTION_PANEL
 	)
@@ -187,8 +185,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_WORLD_EVENTS,
 		name = "Show breaches and chests",
-		description = "Mark breach and Deadman's Chest broadcasts on the world map, like clue and quest markers (click one"
-			+ " at the map's edge to go to it), and list them in the side panel",
+		description = "Mark breach and chest broadcasts on the world map and list them in the side panel",
 		position = 0,
 		section = SECTION_WORLD
 	)
@@ -224,8 +221,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_WORLD_EVENT_MINIMAP,
 		name = "Arrows on the minimap",
-		description = "Show breaches and the chest on the minimap: at their spot when close, otherwise as an arrow on the"
-			+ " minimap's edge pointing towards them",
+		description = "Show breaches and the chest on the minimap, or as an arrow on its edge when far away",
 		position = 3,
 		section = SECTION_WORLD
 	)
@@ -237,8 +233,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_WORLD_EVENT_ARROW,
 		name = "Hint arrow to the chest",
-		description = "Point the game's hint arrow at the current Deadman's Chest when its spot is known. Clicking an"
-			+ " event in the side panel points the arrow at that event instead",
+		description = "Point the game's hint arrow at the chest, or at an event you click in the side panel",
 		position = 4,
 		section = SECTION_WORLD
 	)
@@ -250,7 +245,7 @@ public interface DeadmanToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_LOCAL_LOG,
 		name = "Save local trade log",
-		description = "Append every recorded trade to trades-YYYY-MM.jsonl (one file per month) in this plugin's data folder (works without connecting)",
+		description = "Keep a monthly file of your trades in this plugin's data folder (works without connecting)",
 		position = 0,
 		section = SECTION_LOCAL
 	)
