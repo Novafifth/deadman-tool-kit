@@ -77,6 +77,7 @@ Under **Configuration > Deadman Tool Kit**, or the gear button in the panel.
 | Switch to this panel for GE offers | On | Off: the item still opens here, but whatever panel is open stays on top (handy with another price plugin) |
 | Show breach timer | On | The countdown at the top of the panel |
 | Right-click "DMM prices" | On | The menu option on tradeable items that opens them in the panel |
+| Show profit | Off | Your profit (today, 7 days, all time) at the top of the panel |
 
 ## Privacy
 

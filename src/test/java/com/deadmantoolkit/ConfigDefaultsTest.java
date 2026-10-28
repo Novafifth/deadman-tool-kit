@@ -24,6 +24,7 @@ public class ConfigDefaultsTest
 		assertTrue(config.geSwitchPanel());
 		assertTrue(config.showBreachTimer());
 		assertTrue(config.itemMenuOption());
+		assertFalse(config.showProfit());
 		assertEquals(6, config.staleHours());
 		assertSame(Notification.OFF, config.offerNotification());
 		assertTrue(config.shareWorldEvents());
@@ -49,6 +50,7 @@ public class ConfigDefaultsTest
 		assertEquals("geSwitchPanel", DeadmanToolKitConfig.KEY_GE_SWITCH);
 		assertEquals("showBreachTimer", DeadmanToolKitConfig.KEY_BREACH);
 		assertEquals("itemMenuOption", DeadmanToolKitConfig.KEY_ITEM_MENU);
+		assertEquals("showProfit", DeadmanToolKitConfig.KEY_SHOW_PROFIT);
 		assertEquals("chatHintShown", DeadmanToolKitConfig.KEY_HINT_SHOWN);
 		assertEquals("staleHours", DeadmanToolKitConfig.KEY_STALE_HOURS);
 		assertEquals("offerNotification", DeadmanToolKitConfig.KEY_OFFER_NOTIFICATION);

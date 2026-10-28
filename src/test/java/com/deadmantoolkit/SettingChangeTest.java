@@ -18,6 +18,7 @@ public class SettingChangeTest
 		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_LOCAL_LOG));
 		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_AUTO_OPEN));
 		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_BREACH));
+		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_SHOW_PROFIT));
 		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_STALE_HOURS));
 		assertTrue(DeadmanToolKitPlugin.isSettingChange(G, null, DeadmanToolKitConfig.KEY_OFFER_NOTIFICATION));
 	}

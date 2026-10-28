@@ -18,6 +18,7 @@ public interface DeadmanToolKitConfig extends Config
 	String KEY_GE_SWITCH = "geSwitchPanel";
 	String KEY_BREACH = "showBreachTimer";
 	String KEY_ITEM_MENU = "itemMenuOption";
+	String KEY_SHOW_PROFIT = "showProfit";
 	String KEY_STALE_HOURS = "staleHours";
 	String KEY_OFFER_NOTIFICATION = "offerNotification";
 	String KEY_SHARE_WORLD_EVENTS = "shareWorldEvents";
@@ -182,6 +183,18 @@ public interface DeadmanToolKitConfig extends Config
 	default boolean itemMenuOption()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = KEY_SHOW_PROFIT,
+		name = "Show profit",
+		description = "Show your profit (today, 7 days, all time) in the side panel",
+		position = 4,
+		section = SECTION_PANEL
+	)
+	default boolean showProfit()
+	{
+		return false;
 	}
 
 	@Range(min = 1, max = 72)

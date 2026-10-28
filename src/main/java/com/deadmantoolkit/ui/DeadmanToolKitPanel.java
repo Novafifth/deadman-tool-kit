@@ -633,6 +633,7 @@ public class DeadmanToolKitPanel extends PluginPanel
 		bannerRow.setVisible(config.showBreachTimer());
 		offersSection.setConnected(connected);
 		profitSection.setLogEnabled(config.saveLocalLog());
+		profitSection.setShown(config.showProfit());
 		if (connected != feedConnected)
 		{
 			feedConnected = connected;

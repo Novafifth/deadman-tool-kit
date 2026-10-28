@@ -662,6 +662,7 @@ public class DeadmanToolKitPlugin extends Plugin
 			|| DeadmanToolKitConfig.KEY_LOCAL_LOG.equals(key)
 			|| DeadmanToolKitConfig.KEY_AUTO_OPEN.equals(key)
 			|| DeadmanToolKitConfig.KEY_BREACH.equals(key)
+			|| DeadmanToolKitConfig.KEY_SHOW_PROFIT.equals(key)
 			|| DeadmanToolKitConfig.KEY_STALE_HOURS.equals(key)
 			|| DeadmanToolKitConfig.KEY_OFFER_NOTIFICATION.equals(key)
 			|| DeadmanToolKitConfig.KEY_SHARE_WORLD_EVENTS.equals(key)

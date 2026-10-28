@@ -130,8 +130,14 @@ public class ProfitTextTest
 		});
 		assertFalse(s.getComponent().isVisible());
 		ProfitSnapshot snap = snapshot(1_000, 0, 0, false, true, item(1, 0, 0, 1_000, 0, 0, 0));
+		// Off until the "Show profit" setting is on, even with numbers.
 		s.setSnapshot(snap);
+		assertFalse(s.getComponent().isVisible());
+		s.setShown(true);
 		assertTrue(s.getComponent().isVisible());
+		s.setShown(false);
+		assertFalse(s.getComponent().isVisible());
+		s.setShown(true);
 		List<Component> before = all((Container) s.getComponent());
 		s.setSnapshot(snapshot(1_000, 0, 0, false, true, item(1, 0, 0, 1_000, 0, 0, 0)));
 		s.tick();

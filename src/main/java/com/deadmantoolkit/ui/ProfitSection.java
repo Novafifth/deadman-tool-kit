@@ -45,6 +45,8 @@ class ProfitSection
 	/** The account's numbers; null until an account has loaded. */
 	private ProfitSnapshot snapshot;
 	private boolean logEnabled = true;
+	/** The "Show profit" setting; the panel sets it right after building this. */
+	private boolean profitOn;
 	/** Rebuild was clicked and no snapshot has arrived since. */
 	private boolean requested;
 	/** What the body shows now, to skip identical re-renders. */
@@ -96,6 +98,16 @@ class ProfitSection
 		render();
 	}
 
+	/** The "Show profit" setting: off keeps the whole section hidden. */
+	void setShown(boolean on)
+	{
+		if (on != profitOn)
+		{
+			profitOn = on;
+			render();
+		}
+	}
+
 	/** Whether the local trade log is on; Rebuild needs it. */
 	void setLogEnabled(boolean enabled)
 	{
@@ -124,7 +136,7 @@ class ProfitSection
 	private void render()
 	{
 		styleButton();
-		boolean show = visible(snapshot);
+		boolean show = profitOn && visible(snapshot);
 		if (show != panel.isVisible())
 		{
 			panel.setVisible(show);
