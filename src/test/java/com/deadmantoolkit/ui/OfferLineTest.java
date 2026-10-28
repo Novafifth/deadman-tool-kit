@@ -29,10 +29,10 @@ public class OfferLineTest
 	public void homeTextAndPlainBadge()
 	{
 		OfferLine l = OfferLine.home(SELL, null, NOW);
-		assertEquals("Sell 1.25M Dragon bones", l.getText());
+		assertEquals("Sell @ 1.25M Dragon bones", l.getText());
 		assertEquals("40%", l.getBadge());
 		assertEquals(OfferLine.Badge.PLAIN, l.getKind());
-		assertEquals("Sell 1.25M Dragon bones · 40/100 filled · placed 3h ago", l.getTooltip());
+		assertEquals("Sell @ 1.25M Dragon bones · 40/100 filled · placed 3h ago", l.getTooltip());
 		assertEquals("2|k2", l.key());
 	}
 
@@ -46,7 +46,7 @@ public class OfferLineTest
 
 		OfferLine out = OfferLine.home(BUY, status("k5", OfferWatch.Flag.OUTBID, 2_100_000L, "Highest bid 2,100,000", 60), NOW);
 		assertEquals("outbid", out.getBadge());
-		assertEquals("Buy 2M Abyssal whip", out.getText());
+		assertEquals("Buy @ 2M Abyssal whip", out.getText());
 
 		OfferLine stale = OfferLine.home(BUY, status("k5", OfferWatch.Flag.STALE, null, "No fill for 7h", 7 * 3600 + 59), NOW);
 		assertEquals("stale 7h", stale.getBadge());

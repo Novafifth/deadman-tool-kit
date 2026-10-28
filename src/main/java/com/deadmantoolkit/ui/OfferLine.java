@@ -34,7 +34,7 @@ class OfferLine
 	}
 
 	/**
-	 * For the home view, which lists every item: "Sell 1.25M Dragon bones". The price comes before the name, so at
+	 * For the home view, which lists every item: "Sell @ 1.25M Dragon bones". The price comes before the name, so at
 	 * the panel's width a long name is what gets cut off, not the price.
 	 *
 	 * @param status the offer's market status, or null (not connected, not checked yet)
@@ -43,7 +43,7 @@ class OfferLine
 	static OfferLine home(ActiveOffer o, OfferWatch.OfferStatus status, long now)
 	{
 		String name = o.getName() == null ? "Item " + o.getItemId() : o.getName();
-		String text = (o.isBuy() ? "Buy " : "Sell ") + QuantityFormatter.quantityToStackSize(o.getPrice()) + " " + name;
+		String text = (o.isBuy() ? "Buy @ " : "Sell @ ") + QuantityFormatter.quantityToStackSize(o.getPrice()) + " " + name;
 		return of(o, text, status, now);
 	}
 

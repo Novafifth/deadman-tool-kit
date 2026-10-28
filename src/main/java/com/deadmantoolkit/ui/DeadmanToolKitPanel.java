@@ -46,9 +46,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JViewport;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -83,7 +86,8 @@ public class DeadmanToolKitPanel extends PluginPanel
 	private static final int HEADER_HEIGHT = 30;
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Deadman Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";
-	static final String CREDIT = "Thanks for the help: Queen of S3X, Alfa Dragon";
+	static final String CREDITS_TITLE = "With thanks to";
+	static final String CREDITS = "Queen of S3X";
 	static final String DELETE_TITLE = "Delete my shared data";
 	static final String DELETE_CONFIRM = "Delete everything this computer has shared with the Deadman Tool Kit server"
 		+ " (your trades, offers and ids)? Market totals are recalculated without them. Your local trade log and profit"
@@ -134,6 +138,8 @@ public class DeadmanToolKitPanel extends PluginPanel
 	private final OffersSection offersSection;
 	private final ProfitSection profitSection;
 	private final HomeView homeView;
+	/** What the sidebar shows: the scrolling panel with the credits pinned under it. Built on first use. */
+	private JPanel pinned;
 	private final ItemView itemView;
 	private final Timer refreshTimer;
 	private final Timer searchDebounce;
@@ -294,6 +300,36 @@ public class DeadmanToolKitPanel extends PluginPanel
 		onConfigChanged();
 	}
 
+	/** The credits stay at the bottom of the sidebar while the panel above them scrolls. */
+	@Override
+	public JPanel getWrappedPanel()
+	{
+		if (pinned == null)
+		{
+			pinned = new JPanel(new BorderLayout());
+			pinned.add(super.getWrappedPanel(), BorderLayout.CENTER);
+			pinned.add(buildCredits(), BorderLayout.SOUTH);
+		}
+		return pinned;
+	}
+
+	/** A thin line and two centred small lines at the bottom of the panel. */
+	private static JPanel buildCredits()
+	{
+		JPanel footer = column();
+		footer.setBorder(new CompoundBorder(new MatteBorder(1, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
+			new EmptyBorder(6, 0, 6, 0)));
+		JLabel title = smallLabel(CREDITS_TITLE, ColorScheme.LIGHT_GRAY_COLOR);
+		JLabel names = smallLabel(CREDITS, ColorScheme.TEXT_COLOR);
+		for (JLabel l : new JLabel[] {title, names})
+		{
+			l.setAlignmentX(Component.CENTER_ALIGNMENT);
+			l.setHorizontalAlignment(SwingConstants.CENTER);
+			footer.add(l);
+		}
+		return footer;
+	}
+
 	/** Breach banner, then search + gear, then the connection status line. */
 	private JPanel buildNorth(Runnable openConfig)
 	{
@@ -328,10 +364,6 @@ public class DeadmanToolKitPanel extends PluginPanel
 		status.setAlignmentX(Component.LEFT_ALIGNMENT);
 		status.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
 		north.add(status);
-
-		JComponent credit = wrapText(CREDIT, ColorScheme.LIGHT_GRAY_COLOR);
-		credit.setBorder(new EmptyBorder(2, 0, 0, 0));
-		north.add(credit);
 
 		previewStrip.setAlignmentX(Component.LEFT_ALIGNMENT);
 		previewStrip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
