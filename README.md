@@ -104,10 +104,6 @@ No. It only does anything on world 345, the permanent Deadman world.
 Broadcasts give a place name, not a tile, and the plugin looks the name up in a list of places. If a marker is wrong or
 missing, please report the broadcast text so the place can be added.
 
-## Credits
-
-Thanks to **Queen of S3X**.
-
 ## Feedback
 
 Found a bug or have an idea? [Open an issue](https://github.com/Novafifth/deadman-tool-kit/issues), or message
