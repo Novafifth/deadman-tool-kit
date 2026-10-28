@@ -32,6 +32,10 @@ public class ConfigDefaultsTest
 		assertTrue(config.worldEventMinimap());
 		assertTrue(config.worldEventMapChests());
 		assertTrue(config.worldEventMapBreaches());
+		assertTrue(config.worldEventMapStars());
+		// Guarded stars are shared once connected; unguarded ones (it says you were in a dangerous area) only by choice.
+		assertTrue(config.shareStarsGuarded());
+		assertFalse(config.shareStarsUnguarded());
 	}
 
 	@Test
@@ -54,6 +58,9 @@ public class ConfigDefaultsTest
 		assertEquals("worldEventMinimap", DeadmanToolKitConfig.KEY_WORLD_EVENT_MINIMAP);
 		assertEquals("worldEventMapChests", DeadmanToolKitConfig.KEY_MAP_CHESTS);
 		assertEquals("worldEventMapBreaches", DeadmanToolKitConfig.KEY_MAP_BREACHES);
+		assertEquals("worldEventMapStars", DeadmanToolKitConfig.KEY_MAP_STARS);
+		assertEquals("shareStarsGuarded", DeadmanToolKitConfig.KEY_SHARE_STARS_GUARDED);
+		assertEquals("shareStarsUnguarded", DeadmanToolKitConfig.KEY_SHARE_STARS_UNGUARDED);
 		assertEquals("This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers",
 			DeadmanToolKitConfig.THIRD_PARTY_WARNING);
 	}

@@ -1,5 +1,6 @@
 package com.deadmantoolkit.ui;
 
+import com.deadmantoolkit.world.Stars;
 import com.deadmantoolkit.world.WorldEventIcons;
 import com.deadmantoolkit.world.WorldEventMarkers;
 import com.deadmantoolkit.world.WorldEventMessage;
@@ -32,8 +33,8 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * The breaches and Deadman's Chest going on now, one line each under the breach banner: icon, place, and how long ago
- * it spawned (chest) or how long it has left (breach). The tooltip says how exact the map marker is; clicking a line
+ * The breaches, Deadman's Chest and shooting star going on now, one line each under the breach banner: icon, place,
+ * and how long ago it spawned (chest) or how long it has left (breach, star). The tooltip says how exact the map marker is; clicking a line
  * points the game's hint arrow at that event (again to stop). Hidden while there's nothing to show. EDT only.
  */
 class WorldEventsList
@@ -47,6 +48,8 @@ class WorldEventsList
 	private WorldPoint arrowAt;
 	/** The time labels, in event order, updated each second. */
 	private final List<JLabel> times = new ArrayList<>();
+	/** The text labels, in event order: a star's tier counts down, so they are updated each second too. */
+	private final List<JLabel> texts = new ArrayList<>();
 
 	/** @param onClick a line was clicked (point the hint arrow there, or stop) */
 	WorldEventsList(Consumer<WorldEvents.Event> onClick)
@@ -71,6 +74,7 @@ class WorldEventsList
 		this.arrowAt = arrowAt;
 		panel.removeAll();
 		times.clear();
+		texts.clear();
 		Instant now = Instant.now();
 		for (WorldEvents.Event e : this.events)
 		{
@@ -86,7 +90,7 @@ class WorldEventsList
 		panel.repaint();
 	}
 
-	/** Once a second: the times move on. */
+	/** Once a second: the times move on, and a star's tier counts down. */
 	void tick()
 	{
 		Instant now = Instant.now();
@@ -96,6 +100,14 @@ class WorldEventsList
 			if (!t.equals(times.get(i).getText()))
 			{
 				times.get(i).setText(t);
+			}
+			if (events.get(i).getKind() == WorldEventMessage.Kind.STAR && i < texts.size())
+			{
+				String l = label(events.get(i));
+				if (!l.equals(texts.get(i).getText()))
+				{
+					texts.get(i).setText(l);
+				}
 			}
 		}
 	}
@@ -122,6 +134,7 @@ class WorldEventsList
 		text.setFont(FontManager.getRunescapeSmallFont());
 		text.setForeground(ColorScheme.TEXT_COLOR);
 		row.add(text, BorderLayout.CENTER);
+		texts.add(text);
 
 		JLabel time = new JLabel(timeText(e, now));
 		time.setFont(FontManager.getRunescapeSmallFont());
@@ -147,16 +160,28 @@ class WorldEventsList
 		return row;
 	}
 
-	/** "Chest · north of the Warriors' Guild", "Breach (Multi) · the Bone Yard". */
+	/**
+	 * "Chest · north of the Warriors' Guild", "Breach (Multi) · the Bone Yard", and for a star (its icon says what it is;
+	 * the panel is narrow) "T6 · Guarded · Varrock East Bank".
+	 */
 	static String label(WorldEvents.Event e)
 	{
+		if (e.getKind() == WorldEventMessage.Kind.STAR)
+		{
+			String zone = Stars.zoneName(e.getZone());
+			String place = e.getLocation().startsWith("near ") ? e.getLocation().substring(5) : e.getLocation();
+			return "T" + WorldEventMarkers.starTier(e, Instant.now()) + " · " + (zone == null ? "" : zone + " · ") + place;
+		}
 		String kind = e.getKind() == WorldEventMessage.Kind.CHEST ? "Chest"
 			: e.getCombat() == WorldEventMessage.Combat.MULTI ? "Breach (Multi)"
 			: e.getCombat() == WorldEventMessage.Combat.SINGLE ? "Breach (Single)" : "Breach";
 		return kind + " · " + e.getLocation();
 	}
 
-	/** A chest: how long since it spawned ("12m"); a breach: how long it has left ("31m left"). */
+	/**
+	 * A chest: how long since it spawned ("12m"); a breach: how long it has left ("31m left"); a star: how long it has
+	 * left at most ("~23m left").
+	 */
 	static String timeText(WorldEvents.Event e, Instant now)
 	{
 		if (e.getKind() == WorldEventMessage.Kind.CHEST)
@@ -165,11 +190,15 @@ class WorldEventsList
 			return m < 1 ? "now" : m + "m";
 		}
 		long left = Math.max(0, Duration.between(now, e.getUntil()).toMinutes());
-		return left + "m left";
+		return (e.getKind() == WorldEventMessage.Kind.STAR ? "~" : "") + left + "m left";
 	}
 
 	static String tooltip(WorldEvents.Event e, boolean arrowed)
 	{
+		if (e.getKind() == WorldEventMessage.Kind.STAR)
+		{
+			return starTooltip(e, arrowed);
+		}
 		StringBuilder sb = new StringBuilder("<html>");
 		sb.append(e.getKind() == WorldEventMessage.Kind.CHEST ? "Deadman's Chest: " : "Breach: ")
 			.append(escape(e.getLocation()));
@@ -198,6 +227,30 @@ class WorldEventsList
 		{
 			sb.append("<br>").append(arrowed ? "Click to remove the hint arrow" : "Click to point the hint arrow here");
 		}
+		return sb.append("</html>").toString();
+	}
+
+	static String starTooltip(WorldEvents.Event e, boolean arrowed)
+	{
+		ZoneId zone = ZoneId.systemDefault();
+		StringBuilder sb = new StringBuilder("<html>Shooting star: ").append(escape(e.getLocation()))
+			.append("<br>Tier ").append(WorldEventMarkers.starTier(e, Instant.now()))
+			.append(" now; it drops a tier every 7 minutes")
+			.append("<br>First seen ").append(CLOCK.format(e.getAt().atZone(zone)))
+			.append(", gone by ").append(CLOCK.format(e.getUntil().atZone(zone))).append(" at the latest");
+		String area = Stars.zoneName(e.getZone());
+		sb.append("<br>").append(area == null ? "Area not known yet (it is read by a player at the star)"
+			: "In a " + escape(area.toLowerCase(java.util.Locale.ROOT)) + " area (seen by a player at the star)");
+		if (e.getSource() == WorldEvents.Source.REPORTED)
+		{
+			sb.append("<br>Found by other players (").append(e.getReporters())
+				.append(e.getReporters() == 1 ? " report)" : " reports)");
+		}
+		else if (e.getSource() == WorldEvents.Source.TEST)
+		{
+			sb.append("<br>Test star (developer tools)");
+		}
+		sb.append("<br>").append(arrowed ? "Click to remove the hint arrow" : "Click to point the hint arrow here");
 		return sb.append("</html>").toString();
 	}
 

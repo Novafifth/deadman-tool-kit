@@ -13,7 +13,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 
 /**
- * World event icons, drawn in code (the plugin ships no image files):
+ * World event icons (chest, breach, shooting star), drawn in code (the plugin ships no image files):
  * <ul>
  * <li>{@link #of}: the small panel icon;</li>
  * <li>{@link #pin}: the world map marker, a round badge on a pointer whose tip is the spot (like clue markers);</li>
@@ -41,21 +41,25 @@ public final class WorldEventIcons
 	static final Color CHEST_BG = new Color(0x3a2410);
 	static final Color BREACH_PURPLE = new Color(0xb45cff);
 	static final Color BREACH_BG = new Color(0x2a0a40);
+	static final Color STAR_GOLD = new Color(0xffe066);
+	static final Color STAR_BG = new Color(0x0d1b3d);
 	static final Color OUTLINE = new Color(0x111111);
 
 	private static final int CHEST = 0;
 	private static final int BREACH = 1;
+	private static final int STAR = 2;
+	private static final int KINDS = 3;
 
 	/** [kind][rough] */
-	private static final BufferedImage[][] PANEL = new BufferedImage[2][2];
-	private static final BufferedImage[][] PIN = new BufferedImage[2][2];
-	private static final BufferedImage[][] MINI = new BufferedImage[2][2];
+	private static final BufferedImage[][] PANEL = new BufferedImage[KINDS][2];
+	private static final BufferedImage[][] PIN = new BufferedImage[KINDS][2];
+	private static final BufferedImage[][] MINI = new BufferedImage[KINDS][2];
 	/** [kind][rough][direction] */
-	private static final BufferedImage[][][] EDGES = new BufferedImage[2][2][DIRECTIONS];
+	private static final BufferedImage[][][] EDGES = new BufferedImage[KINDS][2][DIRECTIONS];
 
 	static
 	{
-		for (int k = 0; k < 2; k++)
+		for (int k = 0; k < KINDS; k++)
 		{
 			for (int r = 0; r < 2; r++)
 			{
@@ -77,7 +81,7 @@ public final class WorldEventIcons
 
 	private static int kind(WorldEventMessage.Kind kind)
 	{
-		return kind == WorldEventMessage.Kind.CHEST ? CHEST : BREACH;
+		return kind == WorldEventMessage.Kind.CHEST ? CHEST : kind == WorldEventMessage.Kind.STAR ? STAR : BREACH;
 	}
 
 	private static int rough(WorldLocations.Accuracy accuracy)
@@ -119,7 +123,7 @@ public final class WorldEventIcons
 	/** The colour of a kind (pointers, arrows, the panel's edge). */
 	public static Color color(WorldEventMessage.Kind kind)
 	{
-		return kind == WorldEventMessage.Kind.CHEST ? CHEST_GOLD : BREACH_PURPLE;
+		return colorOf(kind(kind));
 	}
 
 	/* ---------------------------------------------------------------- drawing */
@@ -202,7 +206,7 @@ public final class WorldEventIcons
 
 	private static Color colorOf(int kind)
 	{
-		return kind == CHEST ? CHEST_GOLD : BREACH_PURPLE;
+		return kind == CHEST ? CHEST_GOLD : kind == STAR ? STAR_GOLD : BREACH_PURPLE;
 	}
 
 	/** Dark outline, white ring, dark disc, the glyph scaled into it. */
@@ -212,7 +216,7 @@ public final class WorldEventIcons
 		g.fill(new Ellipse2D.Double(x, y, d, d));
 		g.setColor(Color.WHITE);
 		g.fill(new Ellipse2D.Double(x + 1.5, y + 1.5, d - 3, d - 3));
-		g.setColor(kind == CHEST ? CHEST_BG : BREACH_BG);
+		g.setColor(kind == CHEST ? CHEST_BG : kind == STAR ? STAR_BG : BREACH_BG);
 		double inner = d - 6;
 		g.fill(new Ellipse2D.Double(x + 3, y + 3, inner, inner));
 		AffineTransform saved = g.getTransform();
@@ -228,11 +232,36 @@ public final class WorldEventIcons
 		}
 	}
 
-	/** The chest or breach drawing in a 15 x 15 box. */
+	/** The chest, breach or star drawing in a 15 x 15 box. */
 	private static void glyph(Graphics2D g, int kind)
 	{
 		g.setStroke(new BasicStroke(1f));
-		if (kind == CHEST)
+		if (kind == STAR)
+		{
+			// A five-pointed star.
+			Path2D star = new Path2D.Double();
+			for (int i = 0; i < 10; i++)
+			{
+				double r = i % 2 == 0 ? 7 : 3;
+				double a = -Math.PI / 2 + i * Math.PI / 5;
+				double x = 7.5 + r * Math.cos(a);
+				double y = 8 + r * Math.sin(a);
+				if (i == 0)
+				{
+					star.moveTo(x, y);
+				}
+				else
+				{
+					star.lineTo(x, y);
+				}
+			}
+			star.closePath();
+			g.setColor(STAR_GOLD);
+			g.fill(star);
+			g.setColor(OUTLINE);
+			g.draw(star);
+		}
+		else if (kind == CHEST)
 		{
 			g.setColor(CHEST_WOOD);
 			g.fill(new RoundRectangle2D.Double(1.5, 6, 12, 7.5, 2, 2));

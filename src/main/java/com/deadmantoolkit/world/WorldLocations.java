@@ -205,6 +205,72 @@ public final class WorldLocations
 		return table.getRevision();
 	}
 
+	/** How far a landmark may be for "near X", in tiles. */
+	static final int DESCRIBE_RADIUS = 60;
+	private static final Pattern WORDING = Pattern.compile("^(?:north|south|east|west|central|middle|far)\\b");
+
+	/**
+	 * Names a spot for display (a shooting star's tile): "near X" for the nearest named place within
+	 * {@link #DESCRIBE_RADIUS} tiles, else "in X" for the smallest region around it, else its coordinates. Places that
+	 * are a broadcast's own wording ("North of Edgeville", "Throughout Zanaris") aren't used as landmarks.
+	 */
+	public String describe(WorldPoint p)
+	{
+		WorldPlaces.Place near = null;
+		long nearD = (long) DESCRIBE_RADIUS * DESCRIBE_RADIUS;
+		WorldPlaces.Place region = null;
+		for (WorldPlaces.Place pl : places)
+		{
+			WorldPoint at = pl.getPoint();
+			if (at == null)
+			{
+				continue;
+			}
+			long dx = at.getX() - p.getX();
+			long dy = at.getY() - p.getY();
+			long d = dx * dx + dy * dy;
+			if (pl.isRegion())
+			{
+				if (d <= (long) pl.getRadius() * pl.getRadius() && (region == null || pl.getRadius() < region.getRadius()))
+				{
+					region = pl;
+				}
+			}
+			else if (d <= nearD && landmark(pl.getName()))
+			{
+				near = pl;
+				nearD = d;
+			}
+		}
+		if (near != null)
+		{
+			return "near " + near.getName();
+		}
+		return region != null ? "in " + region.getName() : "at " + p.getX() + ", " + p.getY();
+	}
+
+	/** A place's own name, not a broadcast's wording around one. */
+	private boolean landmark(String name)
+	{
+		String k = matchKey(name);
+		if (WORDING.matcher(k).find())
+		{
+			return false;
+		}
+		for (String lead : leads)
+		{
+			// One-word leads ("in", "at") are common inside real names; only longer wording counts here.
+			if (lead.contains(" ") || lead.length() > 3)
+			{
+				if (k.equals(lead) || k.startsWith(lead + " "))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	public Resolved resolve(String text)
 	{
 		if (text == null)

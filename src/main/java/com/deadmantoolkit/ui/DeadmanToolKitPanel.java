@@ -83,6 +83,7 @@ public class DeadmanToolKitPanel extends PluginPanel
 	private static final int HEADER_HEIGHT = 30;
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Deadman Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";
+	static final String CREDIT = "Thanks to Queen of S3X";
 	static final String DELETE_TITLE = "Delete my shared data";
 	static final String DELETE_CONFIRM = "Delete everything this computer has shared with the Deadman Tool Kit server"
 		+ " (your trades, offers and ids)? Market totals are recalculated without them. Your local trade log and profit"
@@ -327,6 +328,11 @@ public class DeadmanToolKitPanel extends PluginPanel
 		status.setAlignmentX(Component.LEFT_ALIGNMENT);
 		status.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
 		north.add(status);
+
+		JLabel credit = smallLabel(CREDIT, ColorScheme.LIGHT_GRAY_COLOR);
+		credit.setBorder(new EmptyBorder(2, 0, 0, 0));
+		credit.setAlignmentX(Component.LEFT_ALIGNMENT);
+		north.add(credit);
 
 		previewStrip.setAlignmentX(Component.LEFT_ALIGNMENT);
 		previewStrip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

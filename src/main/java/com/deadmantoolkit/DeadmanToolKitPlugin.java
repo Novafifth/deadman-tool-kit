@@ -3,6 +3,7 @@ package com.deadmantoolkit;
 import com.deadmantoolkit.ui.DeadmanToolKitPanel;
 import com.deadmantoolkit.ui.RuneLiteImportAction;
 import com.deadmantoolkit.ui.DevTools;
+import com.deadmantoolkit.world.Stars;
 import com.deadmantoolkit.world.WorldEventMapOverlay;
 import com.deadmantoolkit.world.WorldEventMarkers;
 import com.deadmantoolkit.world.WorldEventMinimapOverlay;
@@ -48,9 +49,12 @@ import net.runelite.api.GrandExchangeOfferState;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.Player;
 import net.runelite.api.ScriptID;
 import net.runelite.api.WorldType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GrandExchangeOfferChanged;
@@ -86,6 +90,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.Filepath;
+import net.runelite.client.util.Text;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
@@ -206,7 +211,7 @@ public class DeadmanToolKitPlugin extends Plugin
 	/** Developer mode only: the {@code ::breach} preview, registered on the event bus; null otherwise. */
 	private volatile BreachCommands breachCommands;
 	private volatile DevCommands devCommands;
-	/** Breach and chest broadcasts: map markers, the panel list, the hint arrow. */
+	/** Breach and chest broadcasts and shooting stars: map markers, the panel list, the hint arrow. */
 	private volatile WorldEventsController worldEvents;
 	private WorldEventMapOverlay worldMapOverlay;
 	private WorldEventMinimapOverlay minimapOverlay;
@@ -568,7 +573,15 @@ public class DeadmanToolKitPlugin extends Plugin
 			nextOpenOffersTick = lastLoginTick + LOGIN_BURST_TICKS + 1;
 			loginCheckPending = true;
 		}
-		else if (e.getGameState() == GameState.LOGIN_SCREEN)
+		if (e.getGameState() == GameState.LOGIN_SCREEN || e.getGameState() == GameState.HOPPING)
+		{
+			WorldEventsController we = worldEvents;
+			if (we != null)
+			{
+				we.onLeftWorld();
+			}
+		}
+		if (e.getGameState() == GameState.LOGIN_SCREEN)
 		{
 			onTrackedWorld = false;
 			announceAccount(null);
@@ -656,7 +669,10 @@ public class DeadmanToolKitPlugin extends Plugin
 			|| DeadmanToolKitConfig.KEY_WORLD_EVENT_ARROW.equals(key)
 			|| DeadmanToolKitConfig.KEY_WORLD_EVENT_MINIMAP.equals(key)
 			|| DeadmanToolKitConfig.KEY_MAP_CHESTS.equals(key)
-			|| DeadmanToolKitConfig.KEY_MAP_BREACHES.equals(key));
+			|| DeadmanToolKitConfig.KEY_MAP_BREACHES.equals(key)
+			|| DeadmanToolKitConfig.KEY_MAP_STARS.equals(key)
+			|| DeadmanToolKitConfig.KEY_SHARE_STARS_GUARDED.equals(key)
+			|| DeadmanToolKitConfig.KEY_SHARE_STARS_UNGUARDED.equals(key));
 	}
 
 	/**
@@ -937,6 +953,22 @@ public class DeadmanToolKitPlugin extends Plugin
 					we.clear();
 				}
 			}
+
+			@Override
+			public void testStar(int tier)
+			{
+				WorldEventsController we = worldEvents;
+				if (we != null)
+				{
+					we.injectStar(tier);
+				}
+			}
+
+			@Override
+			public String zoneInfo()
+			{
+				return DeadmanToolKitPlugin.this.zoneInfo();
+			}
 		};
 	}
 
@@ -1088,10 +1120,36 @@ public class DeadmanToolKitPlugin extends Plugin
 		}
 	}
 
+	/** A crashed shooting star came into view (or a lower tier replaced one). */
+	@Subscribe
+	public void onGameObjectSpawned(GameObjectSpawned e)
+	{
+		WorldEventsController we = worldEvents;
+		if (we != null && Stars.tierOf(e.getGameObject().getId()) > 0)
+		{
+			we.onStarSpawned(e.getGameObject());
+		}
+	}
+
+	@Subscribe
+	public void onGameObjectDespawned(GameObjectDespawned e)
+	{
+		WorldEventsController we = worldEvents;
+		if (we != null && Stars.tierOf(e.getGameObject().getId()) > 0)
+		{
+			we.onStarDespawned(e.getGameObject());
+		}
+	}
+
 	@Subscribe
 	public void onGameTick(GameTick e)
 	{
 		onTrackedWorld = client.getGameState() == GameState.LOGGED_IN && isTrackedWorld();
+		WorldEventsController stars = worldEvents;
+		if (stars != null)
+		{
+			stars.onGameTick();
+		}
 		if (loginCheckPending)
 		{
 			loginCheckPending = false;
@@ -2004,6 +2062,43 @@ public class DeadmanToolKitPlugin extends Plugin
 	/* ---------------------------------------------------------- helpers */
 
 	/** Only the permanent Deadman world (345), double-checked against the world type. */
+	/** Developer tools: the Deadman HUD widgets that may say what zone you are in, shown / hidden with text and sprite. */
+	private String zoneInfo()
+	{
+		int[] ids = {InterfaceID.PvpIcons.SAFEZONE, InterfaceID.PvpIcons.DEADMAN_CURRENTLOCATION_STATUS,
+			InterfaceID.PvpIcons.WILDERNESSLEVEL, InterfaceID.PvpIcons.COMLEVELRANGE, InterfaceID.PvpIcons.PVPW_SAFE,
+			InterfaceID.PvpIcons.PVP};
+		String[] names = {"safezone", "location", "level", "range", "pvpw_safe", "pvp"};
+		StringBuilder sb = new StringBuilder("Zone:");
+		for (int i = 0; i < ids.length; i++)
+		{
+			Widget w = client.getWidget(ids[i]);
+			sb.append(' ').append(names[i]).append('=');
+			if (w == null)
+			{
+				sb.append("none");
+				continue;
+			}
+			sb.append(w.isHidden() ? "hidden" : "shown");
+			String text = w.getText() == null ? "" : Text.removeTags(w.getText()).trim();
+			if (!text.isEmpty())
+			{
+				sb.append(" \"").append(text).append('"');
+			}
+			if (w.getSpriteId() > 0)
+			{
+				sb.append(" sprite ").append(w.getSpriteId());
+			}
+		}
+		Player me = client.getLocalPlayer();
+		if (me != null)
+		{
+			sb.append(" at ").append(me.getWorldLocation().getX()).append(',').append(me.getWorldLocation().getY());
+		}
+		log.debug("{}", sb);
+		return sb.toString();
+	}
+
 	private boolean isTrackedWorld()
 	{
 		return client.getWorld() == PERMANENT_DEADMAN_WORLD

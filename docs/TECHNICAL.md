@@ -57,10 +57,12 @@ the panel):
   prices"* (all on by default).
 - **Offer alerts**: *Flag offers with no fill for (hours)* (6 by default) and *Notify when undercut or outbid* (off by
   default; uses RuneLite's notification settings). The market checks need the connection.
-- **World events**: *Show breaches and chests*, *Chests on the map*, *Breaches on the map* and *Arrows on the
-  minimap* (all on by default; the two "on the map" settings hide one kind from the world map and minimap, the panel
-  still lists it) and *Hint arrow to the chest* (off by default). *Share
-  world events* (under Data sharing, on once connected) sends and receives them; see [World events](#world-events).
+- **World events**: *Show breaches, chests and stars*, *Chests on the map*, *Breaches on the map*, *Stars on the map*
+  and *Arrows on the minimap* (all on by default; the "on the map" settings hide one kind from the world map and
+  minimap, the panel still lists it) and *Hint arrow to the chest* (off by default). *Share world events* (under Data
+  sharing, on once connected) sends and receives them; *Share guarded stars* (on once connected) and *Share
+  unguarded stars* (off by default) send the stars you stand at in those areas, while the ones others shared show whenever you're connected; see [World events](#world-events) and
+  [Shooting stars](#shooting-stars).
 - **Local**: *Save local trade log* (on by default).
 
 ## Breach countdown
@@ -129,6 +131,33 @@ use the install token the uploads registered; until there is one, nothing is sen
 and four breaches, including a region, a place on another map and an unknown place) and `::dgt events clear`; the
 panel's Dev tools have *World events: Sample / Clear*. Test events go through the same parser but are never sent to
 the server.
+
+## Shooting stars
+
+When a crashed shooting star comes into view on world 345, the plugin reads its tier from the game object (sizes 1 to
+9) and marks it like the other events: a pin on the world map labelled "Shooting star (T6): near Varrock East Bank"
+(the nearest named place, else the region, else its coordinates), the minimap, and a panel line with how long it has
+left. A star drops a tier every 7 minutes, mined or not, and is gone 7 minutes after reaching tier 1 or when another
+star lands on the world, so one sighting says when it will be gone at the latest; when its tier drops in view, that
+time is exact. The marker counts down with it, and the star is dropped when that time passes or when it disappears
+within 15 tiles of you (further away it may just have left the loaded area).
+
+**Its Deadman area.** Standing within 2 tiles of the star (where you mine it), the plugin reads the game's own HUD word
+under the PvP icon, "Guarded" or "Deadman" (shown as "Unguarded"), and adds it: "Shooting star (T5, Guarded): near
+Rellekka" on the map, "T5 · Guarded · Rellekka" in the panel. Further away that word is the area you are standing in, not the star's, so it is never taken from a
+distance; until someone has stood at the star its area shows as not known. The first area reported for a star stays.
+`::dgt zone` (developer mode) prints what those HUD widgets show at your spot.
+
+**Sharing** (connected, with *Share guarded stars* (on by default) and/or *Share unguarded stars* (off by default) on): a star
+is sent only once its area is known, that is once you (or someone before you) stood at it, and only if it is in an area
+you share ("Guarded" and other areas such as safe zones count as guarded). The plugin then sends the star's tile, tier,
+area and time, again when its tier drops and when it disappears, with the install id only (no account id). A star you
+only saw from a distance is never sent. Unlike a broadcast, this does say you were near that star at that time; other
+players only see the star. The server keeps one star per
+world (a newer one replaces the last), lists it with the world events for players who log in later once enough players
+reported it, and deletes the star and who reported it after 2 days.
+
+**Developer mode only:** `::dgt star <tier>` puts a test star of that tier on your tile (never sent to the server).
 
 ## Profit
 
@@ -225,6 +254,10 @@ view can show the new market data.
 - the time the upload was sent, so the server can correct for your PC's clock.
 
 Uploads never include your IP address, your RSN, the account hash itself or anything about other players.
+
+**Share world events**, **Share guarded stars** (both on once connected) and **Share unguarded stars** (off by default) send the
+broadcasts and stars described under [World events](#world-events) and [Shooting stars](#shooting-stars), with the
+install id only. Reading the stars others shared needs only the connection.
 
 **IP addresses.** Nothing the plugin sends (no request body, header or URL) contains your IP address, and the server
 never stores, hashes or logs it. Like any connection, the server sees the address you connect from while it answers

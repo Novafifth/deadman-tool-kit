@@ -26,6 +26,9 @@ public interface DeadmanToolKitConfig extends Config
 	String KEY_WORLD_EVENT_MINIMAP = "worldEventMinimap";
 	String KEY_MAP_CHESTS = "worldEventMapChests";
 	String KEY_MAP_BREACHES = "worldEventMapBreaches";
+	String KEY_MAP_STARS = "worldEventMapStars";
+	String KEY_SHARE_STARS_GUARDED = "shareStarsGuarded";
+	String KEY_SHARE_STARS_UNGUARDED = "shareStarsUnguarded";
 	/** Not a setting: set once the one-time chat hint has been considered for this install. */
 	String KEY_HINT_SHOWN = "chatHintShown";
 
@@ -110,6 +113,30 @@ public interface DeadmanToolKitConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = KEY_SHARE_STARS_GUARDED,
+		name = "Share guarded stars",
+		description = "While connected, send stars in guarded or safe areas once you've stood at one (shows you were there)",
+		position = 3,
+		section = SECTION_SHARING
+	)
+	default boolean shareStarsGuarded()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = KEY_SHARE_STARS_UNGUARDED,
+		name = "Share unguarded stars",
+		description = "While connected, send stars in unguarded areas once you've stood at one (shows you were there)",
+		position = 4,
+		section = SECTION_SHARING
+	)
+	default boolean shareStarsUnguarded()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = KEY_AUTO_OPEN,
 		name = "Open item when setting up a GE offer",
 		description = "Show the item in the side panel when you set up a buy or sell offer on world 345",
@@ -184,8 +211,8 @@ public interface DeadmanToolKitConfig extends Config
 
 	@ConfigItem(
 		keyName = KEY_WORLD_EVENTS,
-		name = "Show breaches and chests",
-		description = "Mark breach and chest broadcasts on the world map and list them in the side panel",
+		name = "Show breaches, chests and stars",
+		description = "Mark breaches, chests and shooting stars on the world map and list them in the side panel",
 		position = 0,
 		section = SECTION_WORLD
 	)
@@ -219,10 +246,22 @@ public interface DeadmanToolKitConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = KEY_MAP_STARS,
+		name = "Stars on the map",
+		description = "Mark shooting stars (with their tier) on the world map and minimap, also ones others found",
+		position = 3,
+		section = SECTION_WORLD
+	)
+	default boolean worldEventMapStars()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = KEY_WORLD_EVENT_MINIMAP,
 		name = "Arrows on the minimap",
-		description = "Show breaches and the chest on the minimap, or as an arrow on its edge when far away",
-		position = 3,
+		description = "Show breaches, the chest and the star on the minimap, or as an arrow on its edge when far away",
+		position = 4,
 		section = SECTION_WORLD
 	)
 	default boolean worldEventMinimap()
@@ -234,7 +273,7 @@ public interface DeadmanToolKitConfig extends Config
 		keyName = KEY_WORLD_EVENT_ARROW,
 		name = "Hint arrow to the chest",
 		description = "Point the game's hint arrow at the chest, or at an event you click in the side panel",
-		position = 4,
+		position = 5,
 		section = SECTION_WORLD
 	)
 	default boolean worldEventArrow()

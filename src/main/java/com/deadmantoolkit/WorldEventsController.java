@@ -1,5 +1,6 @@
 package com.deadmantoolkit;
 
+import com.deadmantoolkit.world.Stars;
 import com.deadmantoolkit.world.UnresolvedLog;
 import com.deadmantoolkit.world.WorldEventMarkers;
 import com.deadmantoolkit.world.WorldEventMessage;
@@ -15,23 +16,31 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BooleanSupplier;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
+import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.util.Filepath;
 import net.runelite.client.util.Text;
 
 /**
  * World events on world 345: reads the breach and Deadman's Chest broadcasts, works out where they are
- * ({@link WorldLocations}), keeps the ones going on now ({@link WorldEvents}), marks them on the world map
- * ({@link WorldEventMarkers}), lists them in the panel, and optionally points the hint arrow at one.
+ * ({@link WorldLocations}), notices crashed shooting stars near you ({@link Stars}: the object and its tier), keeps the
+ * ones going on now ({@link WorldEvents}), marks them on the world map ({@link WorldEventMarkers}), lists them in the
+ * panel, and optionally points the hint arrow at one.
  * <p>
  * With the server (connected, "Share world events" on): reports what this client saw, fetches what was broadcast before
  * you logged in, and keeps the place list current (GET v1/world-places; the newest revision of the bundled copy, the
@@ -49,6 +58,18 @@ final class WorldEventsController
 	static final long ACTIVE_POLL_SECONDS = 5 * 60;
 	/** Ask for a newer place list at most this often. */
 	static final long PLACES_POLL_SECONDS = 60 * 60;
+	/**
+	 * A star object that vanished counts as gone only if it vanished this close to you: further away it may just have
+	 * left the loaded area (walking off, a loading screen), well inside it can't.
+	 */
+	static final int STAR_GONE_TILES = 15;
+	/** Ticks to wait after a star object vanished for the next tier's object to take its place. */
+	static final int STAR_REPLACE_TICKS = 2;
+	/**
+	 * Standing this close to a star (where you mine it), the game's HUD word under the PvP icon names the star's own
+	 * Deadman area ("Guarded", "Deadman"); further away it may be the area you are looking in from.
+	 */
+	static final int STAR_ZONE_TILES = 2;
 
 	/** Where the panel list and the hint arrow go. */
 	interface View
@@ -80,6 +101,19 @@ final class WorldEventsController
 	private boolean stopped;
 	private long lastActivePoll;
 	private long lastPlacesPoll;
+	/** Crashed star objects in the loaded area, by tile. */
+	private final Map<WorldPoint, GameObject> starObjects = new HashMap<>();
+	/** The tier last seen on each star tile here, until it is gone or we leave the world. */
+	private final Map<WorldPoint, Integer> starTiers = new HashMap<>();
+	/** Star tiles whose object vanished, with the tick: gone unless the next tier replaces it. */
+	private final Map<WorldPoint, Integer> starVanished = new HashMap<>();
+	/** The last star report sent (tile and tier), so walking back into view doesn't send it again. */
+	private WorldPoint reportedStarAt;
+	private int reportedStarTier;
+	/** The star whose area was sent. */
+	private WorldPoint zoneReportedAt;
+	/** The star tier the markers were last drawn with (they are redrawn as it counts down). */
+	private int shownStarTier;
 	/** ETag of the server's place list we have; any thread. */
 	private volatile String placesEtag;
 
@@ -165,15 +199,219 @@ final class WorldEventsController
 		refresh();
 	}
 
+	/** Developer tools: a test star of {@code tier} on your tile (never reported to the server). Client thread. */
+	void injectStar(int tier)
+	{
+		Player me = client.getLocalPlayer();
+		if (me == null || tier < 1 || tier > Stars.MAX_TIER)
+		{
+			return;
+		}
+		WorldPoint at = me.getWorldLocation();
+		Instant now = Instant.now();
+		events.addStar(at, Stars.goneBy(tier, now), now, describe(at), WorldEvents.Source.TEST, 0, null);
+		refresh();
+	}
+
 	/** Roughly every few seconds while logged in: end old events, poll the server now and then. Client thread. */
 	void tick()
 	{
 		Instant now = Instant.now();
-		if (events.expire(now))
+		boolean changed = events.expire(now);
+		// A star's tier counts down on its own: redraw the markers (their labels show the tier) when it does.
+		WorldEvents.Event star = events.star();
+		int tier = star == null ? 0 : WorldEventMarkers.starTier(star, now);
+		if (changed || tier != shownStarTier)
 		{
 			refresh();
 		}
 		poll(now.getEpochSecond(), false);
+	}
+
+	/* ------------------------------------------------------------------ shooting stars seen here */
+
+	/** A crashed star object appeared in the loaded area (also when you walk into view of one). Client thread. */
+	void onStarSpawned(GameObject o)
+	{
+		int tier = Stars.tierOf(o.getId());
+		if (tier == 0 || stopped || !onTrackedWorld.getAsBoolean())
+		{
+			return;
+		}
+		WorldPoint at = o.getWorldLocation();
+		starObjects.put(at, o);
+		starVanished.remove(at);
+		Integer before = starTiers.put(at, tier);
+		// A lower tier taking the place of the one seen here: its 7 minutes start now, the exact "gone by".
+		seenStar(at, tier, before != null && before > tier);
+	}
+
+	/** A crashed star object left the loaded area or the game. Client thread. */
+	void onStarDespawned(GameObject o)
+	{
+		if (Stars.tierOf(o.getId()) == 0)
+		{
+			return;
+		}
+		WorldPoint at = o.getWorldLocation();
+		if (starObjects.get(at) == o)
+		{
+			starObjects.remove(at);
+		}
+		starVanished.put(at, client.getTickCount());
+	}
+
+	/**
+	 * Every game tick: a star object that vanished and wasn't replaced by the next tier is gone; standing at the star,
+	 * its Deadman area is read from the HUD. Client thread.
+	 */
+	void onGameTick()
+	{
+		checkStarZone();
+		if (starVanished.isEmpty())
+		{
+			return;
+		}
+		int tick = client.getTickCount();
+		Iterator<Map.Entry<WorldPoint, Integer>> it = starVanished.entrySet().iterator();
+		while (it.hasNext())
+		{
+			Map.Entry<WorldPoint, Integer> en = it.next();
+			if (tick - en.getValue() < STAR_REPLACE_TICKS)
+			{
+				continue;
+			}
+			it.remove();
+			WorldPoint at = en.getKey();
+			if (starObjects.containsKey(at))
+			{
+				// The next tier took its place.
+				continue;
+			}
+			starTiers.remove(at);
+			Player me = client.getLocalPlayer();
+			WorldPoint mine = me == null ? null : me.getWorldLocation();
+			if (client.getGameState() == GameState.LOGGED_IN && mine != null && mine.getPlane() == at.getPlane()
+				&& mine.distanceTo2D(at) <= STAR_GONE_TILES)
+			{
+				starGone(at);
+			}
+		}
+	}
+
+	/** Logged out or hopping: the stars seen here belong to the world being left. Client thread. */
+	void onLeftWorld()
+	{
+		starObjects.clear();
+		starTiers.clear();
+		starVanished.clear();
+		reportedStarAt = null;
+		reportedStarTier = 0;
+		zoneReportedAt = null;
+	}
+
+	/** Standing at the star in view whose area isn't known yet: read it from the HUD, show it and send it. */
+	private void checkStarZone()
+	{
+		if (starTiers.isEmpty())
+		{
+			return;
+		}
+		WorldEvents.Event star = events.star();
+		if (star == null || star.getZone() != null)
+		{
+			return;
+		}
+		WorldPoint at = star.getWhere().getPoint();
+		Integer tier = starTiers.get(at);
+		Player me = client.getLocalPlayer();
+		if (tier == null || me == null)
+		{
+			return;
+		}
+		WorldPoint mine = me.getWorldLocation();
+		if (mine.getPlane() != at.getPlane() || mine.distanceTo2D(at) > STAR_ZONE_TILES)
+		{
+			return;
+		}
+		Widget w = client.getWidget(InterfaceID.PvpIcons.WILDERNESSLEVEL);
+		String zone = w == null || w.isHidden() || w.getText() == null ? null : Stars.zoneId(Text.removeTags(w.getText()));
+		if (zone == null || !events.starZone(at, zone))
+		{
+			return;
+		}
+		refresh();
+		if (sharesStar(zone) && !at.equals(zoneReportedAt))
+		{
+			zoneReportedAt = at;
+			reportedStarAt = at;
+			reportedStarTier = tier;
+			int world = client.getWorld();
+			long ts = Instant.now().getEpochSecond();
+			int seenTier = tier;
+			executor.execute(() -> server.reportStar(world, at, seenTier, false, ts, zone));
+		}
+	}
+
+	private void seenStar(WorldPoint at, int tier, boolean dropped)
+	{
+		Instant now = Instant.now();
+		boolean changed = events.addStar(at, Stars.goneBy(tier, now), now, describe(at), WorldEvents.Source.SEEN, 0, null);
+		// Sent only once its area is known (someone stood at it) and that area is one the player shares.
+		String zone = starZone(at);
+		if (sharesStar(zone) && (tier != reportedStarTier || !at.equals(reportedStarAt)))
+		{
+			reportedStarAt = at;
+			reportedStarTier = tier;
+			int world = client.getWorld();
+			long ts = now.getEpochSecond();
+			executor.execute(() -> server.reportStar(world, at, tier, dropped, ts, zone));
+		}
+		if (changed)
+		{
+			refresh();
+		}
+	}
+
+	private void starGone(WorldPoint at)
+	{
+		String zone = starZone(at);
+		boolean changed = events.starGone(at);
+		if (sharesStar(zone))
+		{
+			int world = client.getWorld();
+			long ts = Instant.now().getEpochSecond();
+			executor.execute(() -> server.reportStar(world, at, 0, false, ts));
+		}
+		if (at.equals(reportedStarAt))
+		{
+			reportedStarAt = null;
+			reportedStarTier = 0;
+		}
+		if (changed)
+		{
+			refresh();
+		}
+	}
+
+	/** How a star's spot is named: the nearest landmark, region or its coordinates. */
+	private String describe(WorldPoint at)
+	{
+		WorldLocations loc = locations;
+		return loc != null ? loc.describe(at) : "at " + at.getX() + ", " + at.getY();
+	}
+
+	/** The area of the star listed at {@code at}, or null when unknown (or another star is listed). */
+	private String starZone(WorldPoint at)
+	{
+		WorldEvents.Event star = events.star();
+		return star != null && at.equals(star.getWhere().getPoint()) ? star.getZone() : null;
+	}
+
+	/** Connected, and the star's area is known and one the player shares ("Share guarded / unguarded stars"). */
+	private boolean sharesStar(String zone)
+	{
+		return config.connected() && Stars.shared(zone, config.shareStarsGuarded(), config.shareStarsUnguarded());
 	}
 
 	/** Logged in (on any world), or hopped: markers follow the world; late logins ask the server. Client thread. */
@@ -234,7 +472,9 @@ final class WorldEventsController
 	/** Ask the server for current events (and now and then a newer place list). Client thread. */
 	private void poll(long now, boolean force)
 	{
-		if (!sharing() || !onTrackedWorld.getAsBoolean() || client.getGameState() != GameState.LOGGED_IN)
+		// Connected: the stars others found are always fetched (reading them says nothing about you); broadcasts only
+		// with "Share world events" on.
+		if (!config.connected() || !onTrackedWorld.getAsBoolean() || client.getGameState() != GameState.LOGGED_IN)
 		{
 			return;
 		}
@@ -255,6 +495,19 @@ final class WorldEventsController
 	{
 		if (stopped)
 		{
+			return;
+		}
+		if (a.stars != null)
+		{
+			for (WorldEventClient.ReportedStar r : a.stars)
+			{
+				addReportedStar(r);
+			}
+		}
+		if (!sharing())
+		{
+			events.expire(Instant.now());
+			refresh();
 			return;
 		}
 		for (WorldEventClient.Reported r : a.events)
@@ -285,6 +538,32 @@ final class WorldEventsController
 		}
 		events.expire(Instant.now());
 		refresh();
+	}
+
+	/** A star other players found: checked (a tile, a tier, times that make sense), then listed. */
+	private void addReportedStar(WorldEventClient.ReportedStar r)
+	{
+		if (r == null || r.x == null || r.y == null || r.tier == null || r.goneBy == null || r.firstSeen == null
+			|| r.tier < 1 || r.tier > Stars.MAX_TIER || r.x < 0 || r.y < 0 || r.x >= 16384 || r.y >= 16384)
+		{
+			return;
+		}
+		int plane = r.plane == null ? 0 : r.plane;
+		if (plane < 0 || plane > 3)
+		{
+			return;
+		}
+		Instant goneBy = Instant.ofEpochSecond(r.goneBy);
+		// Never longer than a fresh tier-9 star could last.
+		if (goneBy.isAfter(Instant.now().plus(Stars.TIER_TIME.multipliedBy(Stars.MAX_TIER))))
+		{
+			return;
+		}
+		WorldPoint at = new WorldPoint(r.x, r.y, plane);
+		// Other players' text: only a plain zone id is used.
+		String zone = r.zone != null && r.zone.matches("[a-z]{1," + Stars.MAX_ZONE + "}") ? r.zone : null;
+		events.addStar(at, goneBy, Instant.ofEpochSecond(r.firstSeen), describe(at), WorldEvents.Source.REPORTED,
+			r.reporters == null ? 0 : r.reporters, zone);
 	}
 
 	/**
@@ -329,11 +608,13 @@ final class WorldEventsController
 		List<WorldEvents.Event> onMap = new ArrayList<>();
 		for (WorldEvents.Event e : list)
 		{
-			if (e.getKind() == WorldEventMessage.Kind.CHEST ? config.worldEventMapChests() : config.worldEventMapBreaches())
+			if (onMap(e.getKind()))
 			{
 				onMap.add(e);
 			}
 		}
+		WorldEvents.Event star = events.star();
+		shownStarTier = star == null ? 0 : WorldEventMarkers.starTier(star, Instant.now());
 		if (show && here)
 		{
 			arrow = arrowTarget(list);
@@ -345,6 +626,19 @@ final class WorldEventsController
 		}
 		minimapEvents = show && here && config.worldEventMinimap() ? onMap : Collections.emptyList();
 		view.show(show ? list : Collections.emptyList(), arrow);
+	}
+
+	private boolean onMap(WorldEventMessage.Kind kind)
+	{
+		switch (kind)
+		{
+			case CHEST:
+				return config.worldEventMapChests();
+			case STAR:
+				return config.worldEventMapStars();
+			default:
+				return config.worldEventMapBreaches();
+		}
 	}
 
 	/** What the minimap overlay shows now (empty when hidden or not on world 345). Client thread. */

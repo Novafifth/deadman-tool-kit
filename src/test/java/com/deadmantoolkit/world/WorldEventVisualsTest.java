@@ -86,4 +86,22 @@ public class WorldEventVisualsTest
 		assertEquals(edge.getWhere().getPoint(), WorldEventMinimapOverlay.target(edge, surface));
 		assertNull(WorldEventMinimapOverlay.target(event(Kind.CHEST, "the Whispering Glade", null), surface));
 	}
+
+	@Test
+	public void aStarSaysItsTierAndHasItsOwnIcons()
+	{
+		Instant now = Instant.now();
+		WorldPoint at = new WorldPoint(3254, 3418, 0);
+		WorldEvents.Event star = new WorldEvents.Event(Kind.STAR, "near Varrock East Bank", null, now,
+			Stars.goneBy(6, now), new WorldLocations.Resolved(Accuracy.EXACT, at, 0, "near Varrock East Bank", null, null, false),
+			WorldEvents.Source.SEEN, 0);
+		assertEquals("Shooting star (T6): near Varrock East Bank", WorldEventMarkers.label(star, null));
+		// Six minutes on it is still tier 6; eight minutes on, tier 5.
+		assertEquals(6, WorldEventMarkers.starTier(star, now.plusSeconds(360)));
+		assertEquals(5, WorldEventMarkers.starTier(star, now.plusSeconds(480)));
+		BufferedImage pin = WorldEventIcons.pin(Kind.STAR, Accuracy.EXACT);
+		assertTrue(pin != WorldEventIcons.pin(Kind.CHEST, Accuracy.EXACT) && pin != WorldEventIcons.pin(Kind.BREACH, Accuracy.EXACT));
+		assertTrue("the badge is drawn", alpha(pin, pin.getWidth() / 2, WorldEventIcons.BADGE / 2) > 0);
+		assertEquals(WorldEventIcons.STAR_GOLD, WorldEventIcons.color(Kind.STAR));
+	}
 }

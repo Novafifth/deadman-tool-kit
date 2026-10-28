@@ -1,6 +1,7 @@
 package com.deadmantoolkit.world;
 
 import java.awt.image.BufferedImage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -162,6 +163,13 @@ public final class WorldEventMarkers
 	 */
 	static String label(WorldEvents.Event e, String entranceName)
 	{
+		if (e.getKind() == WorldEventMessage.Kind.STAR)
+		{
+			// "Shooting star (T6): near Varrock east mine"; the tier counts down (the markers are redrawn as it does).
+			String zone = Stars.zoneName(e.getZone());
+			return "Shooting star (T" + starTier(e, Instant.now()) + (zone == null ? "" : ", " + zone) + "): "
+				+ e.getLocation();
+		}
 		StringBuilder sb = new StringBuilder(e.getKind() == WorldEventMessage.Kind.CHEST ? "Deadman's Chest" : "Breach");
 		if (e.getCombat() != null)
 		{
@@ -181,6 +189,12 @@ public final class WorldEventMarkers
 			}
 		}
 		return sb.toString();
+	}
+
+	/** A star's tier at {@code now} (at least 1 while it is listed). */
+	public static int starTier(WorldEvents.Event e, Instant now)
+	{
+		return Math.max(1, Stars.tierAt(e.getUntil(), now));
 	}
 
 	/** How rough a marker is, in a few words; null when exact. */

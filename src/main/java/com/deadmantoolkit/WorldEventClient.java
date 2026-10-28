@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.coords.WorldPoint;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
@@ -21,9 +22,10 @@ import okio.BufferedSource;
 
 /**
  * World events and the server: reports the breach / chest broadcasts this client saw (POST v1/world-events: the place
- * as the game wrote it, the time, and how well the plugin could place it), reads the ones broadcast before you logged
- * in (GET v1/world-events), and reads the server's place list (GET v1/world-places), which can be updated without a
- * new plugin release. Only used while connected with "Share world events" on.
+ * as the game wrote it, the time, and how well the plugin could place it) and the shooting stars it came across
+ * (POST v1/stars: tile, tier, time), reads the ones from before you logged in (GET v1/world-events, which also lists
+ * the current star), and reads the server's place list (GET v1/world-places), which can be updated without a new
+ * plugin release. Only used while connected with "Share world events" or "Share shooting stars" on.
  * <p>
  * Reports carry the install token the uploader registered, but never take part in its upkeep (two registrations at
  * once would make one switch install id): without a token yet, or with a refused one, the report is dropped. All
@@ -37,6 +39,23 @@ class WorldEventClient
 	{
 		long now;
 		List<Reported> events;
+		/** The current shooting star, if any (servers before stars leave it out). */
+		List<ReportedStar> stars;
+	}
+
+	/** The shooting star other players found. */
+	static final class ReportedStar
+	{
+		Integer x;
+		Integer y;
+		Integer plane;
+		Integer tier;
+		Long tierAt;
+		Long goneBy;
+		Long firstSeen;
+		Integer reporters;
+		/** The Deadman area a player at the star saw, or null. */
+		String zone;
 	}
 
 	/** One event other players reported. */
@@ -93,11 +112,61 @@ class WorldEventClient
 		post(body, identity.installId(), token);
 	}
 
+	/**
+	 * Report a shooting star seen here: its tile and tier ({@code changed}: the tier just dropped), or that it was seen
+	 * disappearing (tier 0). The install id only, no account id. Not on the client thread.
+	 *
+	 * @param ts when it was seen, unix seconds
+	 */
+	void reportStar(int world, WorldPoint at, int tier, boolean changed, long ts)
+	{
+		reportStar(world, at, tier, changed, ts, null);
+	}
+
+	/** @param zone the Deadman area seen at the star ({@link com.deadmantoolkit.world.Stars#zoneId}), or null */
+	void reportStar(int world, WorldPoint at, int tier, boolean changed, long ts, String zone)
+	{
+		JsonObject body = new JsonObject();
+		body.addProperty("world", world);
+		body.addProperty("x", at.getX());
+		body.addProperty("y", at.getY());
+		body.addProperty("plane", at.getPlane());
+		if (tier > 0)
+		{
+			body.addProperty("tier", tier);
+			if (changed)
+			{
+				body.addProperty("changed", true);
+			}
+			if (zone != null)
+			{
+				body.addProperty("zone", zone);
+			}
+		}
+		else
+		{
+			body.addProperty("gone", true);
+		}
+		body.addProperty("ts", ts);
+		String token = identity.token();
+		if (token == null)
+		{
+			log.debug("Star report skipped: no install token yet");
+			return;
+		}
+		post("v1/stars", body, identity.installId(), token);
+	}
+
 	private void post(JsonObject body, String installId, String token)
+	{
+		post("v1/world-events", body, installId, token);
+	}
+
+	private void post(String path, JsonObject body, String installId, String token)
 	{
 		body.addProperty("installId", installId);
 		Request request = InstallAuth.bearer(new Request.Builder()
-			.url(base.newBuilder().addPathSegments("v1/world-events").build())
+			.url(base.newBuilder().addPathSegments(path).build())
 			.post(RequestBody.create(InstallAuth.JSON, gson.toJson(body))), token)
 			.build();
 		http.newCall(request).enqueue(new Callback()

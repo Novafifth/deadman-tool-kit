@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.Value;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * The world events going on now: the current Deadman's Chest and any breaches. Times come from the broadcast itself
@@ -18,6 +19,8 @@ import lombok.Value;
  * {@link #AFTER_SPAWN} more (the monsters left can stay up to 30 minutes, but by then the breach is over).</li>
  * <li>The same event reported again (the broadcast repeated, or the server's copy of one seen here) within
  * {@link #SAME} is one event: the earliest time wins, and a sighting here wins over the server's.</li>
+ * <li>One shooting star at a time ({@link Stars}): a star first seen later at another spot replaces the last one. It is
+ * listed until it is seen to disappear or its "gone by" time passes (the earliest any sighting gave).</li>
  * </ul>
  * Pure; one thread (the client thread).
  */
@@ -58,6 +61,31 @@ public final class WorldEvents
 		Source source;
 		/** Players who reported it to the server (0 when only seen here). */
 		int reporters;
+		/**
+		 * Stars: the Deadman area it is in as the game's HUD names it for a player at the star ("guarded",
+		 * "unguarded", ...), or null when nobody at it reported one. Null for broadcasts.
+		 */
+		String zone;
+
+		public Event(WorldEventMessage.Kind kind, String location, WorldEventMessage.Combat combat, Instant at,
+			Instant until, WorldLocations.Resolved where, Source source, int reporters)
+		{
+			this(kind, location, combat, at, until, where, source, reporters, null);
+		}
+
+		public Event(WorldEventMessage.Kind kind, String location, WorldEventMessage.Combat combat, Instant at,
+			Instant until, WorldLocations.Resolved where, Source source, int reporters, String zone)
+		{
+			this.kind = kind;
+			this.location = location;
+			this.combat = combat;
+			this.at = at;
+			this.until = until;
+			this.where = where;
+			this.source = source;
+			this.reporters = reporters;
+			this.zone = zone;
+		}
 
 		/** Same kind and place (wording compared like {@link WorldLocations#key}). */
 		boolean samePlace(WorldEventMessage.Kind k, String text)
@@ -67,7 +95,75 @@ public final class WorldEvents
 	}
 
 	private Event chest;
+	private Event star;
 	private final List<Event> breaches = new ArrayList<>();
+
+	/**
+	 * A shooting star seen here or reported by the server. The same spot again keeps the earliest "gone by" (every
+	 * sighting is an upper bound, a tier drop the exact time) and the first sighting's time.
+	 *
+	 * @param goneBy    the latest it can still be there ({@link Stars#goneBy})
+	 * @param firstSeen when it was first seen
+	 * @param place     how its spot is named ({@link WorldLocations#describe})
+	 * @param zone      the Deadman area it is in ({@link Event#getZone}), or null when not known; the first known stays
+	 * @return true when the list changed
+	 */
+	public boolean addStar(WorldPoint point, Instant goneBy, Instant firstSeen, String place, Source source, int reporters,
+		String zone)
+	{
+		if (star != null && point.equals(star.where.getPoint()))
+		{
+			Instant until = goneBy.isBefore(star.until) ? goneBy : star.until;
+			Instant at = firstSeen.isBefore(star.at) ? firstSeen : star.at;
+			Source src = star.source == Source.SEEN || source == Source.SEEN ? Source.SEEN : star.source;
+			Event merged = new Event(WorldEventMessage.Kind.STAR, star.location, null, at, until, star.where, src,
+				Math.max(star.reporters, reporters), star.zone != null ? star.zone : zone);
+			boolean changed = !merged.equals(star);
+			star = merged;
+			return changed;
+		}
+		if (star != null && !firstSeen.isAfter(star.at))
+		{
+			// An older star (a late report): the newer one stays.
+			return false;
+		}
+		star = new Event(WorldEventMessage.Kind.STAR, place, null, firstSeen, goneBy, starWhere(point, place), source,
+			reporters, zone);
+		return true;
+	}
+
+	/** A player at the star saw which Deadman area it is in. @return true when that is new */
+	public boolean starZone(WorldPoint point, String zone)
+	{
+		if (star == null || zone == null || star.zone != null || !point.equals(star.where.getPoint()))
+		{
+			return false;
+		}
+		star = new Event(star.kind, star.location, null, star.at, star.until, star.where, star.source, star.reporters, zone);
+		return true;
+	}
+
+	/** The star at {@code point} was seen disappearing. @return true when it was listed */
+	public boolean starGone(WorldPoint point)
+	{
+		if (star != null && point.equals(star.where.getPoint()))
+		{
+			star = null;
+			return true;
+		}
+		return false;
+	}
+
+	/** The star, or null. */
+	public Event star()
+	{
+		return star;
+	}
+
+	private static WorldLocations.Resolved starWhere(WorldPoint point, String place)
+	{
+		return new WorldLocations.Resolved(WorldLocations.Accuracy.EXACT, point, 0, place, null, null, false);
+	}
 
 	/**
 	 * Add an event.
@@ -119,6 +215,7 @@ public final class WorldEvents
 	public void clear()
 	{
 		chest = null;
+		star = null;
 		breaches.clear();
 	}
 
@@ -131,17 +228,26 @@ public final class WorldEvents
 			chest = null;
 			changed = true;
 		}
+		if (star != null && !now.isBefore(star.until))
+		{
+			star = null;
+			changed = true;
+		}
 		changed |= breaches.removeIf(b -> !now.isBefore(b.until));
 		return changed;
 	}
 
-	/** The chest (if any) first, then breaches, oldest first. Call {@link #expire} first. */
+	/** The chest (if any) first, then the star, then breaches, oldest first. Call {@link #expire} first. */
 	public List<Event> active()
 	{
 		List<Event> out = new ArrayList<>();
 		if (chest != null)
 		{
 			out.add(chest);
+		}
+		if (star != null)
+		{
+			out.add(star);
 		}
 		out.addAll(breaches);
 		return out;
@@ -153,6 +259,13 @@ public final class WorldEvents
 		if (chest != null)
 		{
 			chest = withWhere(chest, locations.resolve(chest.location));
+		}
+		if (star != null)
+		{
+			// The spot is exact; only its name may change.
+			String place = locations.describe(star.where.getPoint());
+			star = new Event(star.kind, place, null, star.at, star.until, starWhere(star.where.getPoint(), place),
+				star.source, star.reporters, star.zone);
 		}
 		breaches.replaceAll(b -> withWhere(b, locations.resolve(b.location)));
 	}

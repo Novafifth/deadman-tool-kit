@@ -18,7 +18,7 @@ final class DevCommands
 {
 	static final String COMMAND = "dgt";
 	static final String USAGE = "Usage: ::dgt fresh | fresh off | hints | chest <place> | breach <place> [single|multi]"
-		+ " | events sample | events clear";
+		+ " | star <tier 1-9> | zone | events sample | events clear";
 
 	enum Action
 	{
@@ -34,6 +34,10 @@ final class DevCommands
 		EVENTS_SAMPLE,
 		/** Forget all world events. */
 		EVENTS_CLEAR,
+		/** A test shooting star of {@link Command#getTier()} on your tile. */
+		STAR,
+		/** Print what the game's Deadman zone widgets show here (to find the one that says safe / guarded / dangerous). */
+		ZONE,
 	}
 
 	@Value
@@ -42,6 +46,20 @@ final class DevCommands
 		Action action;
 		/** WORLD_EVENT: the broadcast to feed, in the game's wording. */
 		String gameText;
+		/** STAR: its tier (1-9). */
+		int tier;
+
+		Command(Action action, String gameText)
+		{
+			this(action, gameText, 0);
+		}
+
+		Command(Action action, String gameText, int tier)
+		{
+			this.action = action;
+			this.gameText = gameText;
+			this.tier = tier;
+		}
 	}
 
 	/** The sample wave, in the game's wording. */
@@ -64,6 +82,12 @@ final class DevCommands
 		void worldEvent(String gameText);
 
 		void clearWorldEvents();
+
+		/** A test shooting star on your tile. */
+		void testStar(int tier);
+
+		/** What the Deadman zone widgets show at your spot, as one line. */
+		String zoneInfo();
 	}
 
 	private final Target target;
@@ -123,12 +147,19 @@ final class DevCommands
 				target.clearWorldEvents();
 				chat.accept("World events cleared.");
 				break;
+			case ZONE:
+				chat.accept(target.zoneInfo());
+				break;
+			case STAR:
+				target.testStar(c.getTier());
+				chat.accept("Test star: tier " + c.getTier() + " on your tile.");
+				break;
 		}
 	}
 
 	/**
 	 * {@code fresh [on|off]}, {@code hints}, {@code chest <place>}, {@code breach <place> [single|multi]},
-	 * {@code events sample}, {@code events clear}; case-insensitive.
+	 * {@code star <tier>}, {@code zone}, {@code events sample}, {@code events clear}; case-insensitive.
 	 */
 	static Optional<Command> parse(String[] args)
 	{
@@ -159,6 +190,16 @@ final class DevCommands
 				}
 				return second.equals("sample") ? Optional.of(new Command(Action.EVENTS_SAMPLE, null))
 					: second.equals("clear") ? Optional.of(new Command(Action.EVENTS_CLEAR, null)) : Optional.empty();
+			case "zone":
+				return args.length == 1 ? Optional.of(new Command(Action.ZONE, null)) : Optional.empty();
+			case "star":
+			{
+				if (args.length != 2 || !second.matches("[1-9]"))
+				{
+					return Optional.empty();
+				}
+				return Optional.of(new Command(Action.STAR, null, Integer.parseInt(second)));
+			}
 			case "chest":
 			{
 				String place = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();

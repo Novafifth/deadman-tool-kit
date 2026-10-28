@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 1792534700,
+  "revision": 1793091382,
   "about": "Places a Deadman world event broadcast can name. x/y are world tiles (plane 0 unless given); radius is how far a place spreads in tiles (default 8). Places on another map (Zanaris, the Mole Hole) give their surface entrance. Regions are kingdoms and areas a broadcast names instead of a spot. Names and aliases match ignoring case, apostrophes and punctuation, and must be unique. revision is the unix time of the last change (the newest copy wins: the plugin's bundled copy, its saved copy or the server's). wording: words dropped from the front (leads) or end (tails) of a place before matching.",
   "wording": {
     "leads": ["throughout", "within", "surrounding", "on top of", "the top of", "top of", "the mounds at", "the mounds of", "mounds at", "the mounds", "around", "near", "nearby", "just outside", "outside", "inside", "somewhere in", "deep in", "the outskirts of", "outskirts of", "the area around", "the area near", "the area of", "the area", "area of", "the ruins at", "in", "at", "on", "by", "the"],
@@ -127,6 +127,7 @@
     {"name": "Brimhaven Dungeon", "area": "Karamja", "x": 2745, "y": 3152},
     {"name": "Karamja Volcano", "area": "Karamja", "x": 2856, "y": 3168, "aliases": ["volcano"]},
     {"name": "Shilo Village", "area": "Karamja", "x": 2849, "y": 2972},
+    {"name": "River Amja", "area": "Karamja", "x": 2915, "y": 3030, "radius": 30},
     {"name": "Tai Bwo Wannai", "area": "Karamja", "x": 2795, "y": 3065},
     {"name": "Cairn Isle", "area": "Karamja", "x": 2765, "y": 2975},
     {"name": "Kharazi Jungle", "area": "Karamja", "x": 2850, "y": 2900},
@@ -158,6 +159,7 @@
     {"name": "Meiyerditch", "area": "Morytania", "x": 3615, "y": 3255},
     {"name": "Fenkenstrain's Castle", "area": "Morytania", "x": 3550, "y": 3540},
     {"name": "Slayer Tower", "area": "Morytania", "x": 3428, "y": 3537, "aliases": ["morytania slayer tower"]},
+    {"name": "Mausoleum", "area": "Morytania", "x": 3504, "y": 3571, "aliases": ["morytania mausoleum"]},
     {"name": "Mos Le'Harmless", "area": "Morytania", "x": 3680, "y": 2970},
     {"name": "Haunted Woods", "area": "Morytania", "x": 3560, "y": 3485},
     {"name": "Mort Myre Swamp", "area": "Morytania", "x": 3450, "y": 3400, "aliases": ["mort myre"]},
@@ -187,6 +189,7 @@
     {"name": "Ferox Enclave", "area": "Wilderness", "x": 3130, "y": 3630, "aliases": ["ferox", "enclave"]},
     {"name": "Wilderness Ditch", "area": "Wilderness", "x": 3087, "y": 3522, "aliases": ["the ditch"]},
     {"name": "Chaos Temple", "area": "Wilderness", "x": 3240, "y": 3608, "aliases": ["wilderness chaos temple", "Chaos Temple (Wilderness)"]},
+    {"name": "Pyre Cove", "area": "Wilderness", "x": 3349, "y": 3618},
     {"name": "Chaos Temple (hut)", "area": "Wilderness", "x": 2951, "y": 3821, "aliases": ["chaos altar", "Chaos Temple (church)", "Chaos Altar (Wilderness)", "level 38 Chaos Temple"]},
     {"name": "Dark Warriors' Fortress", "area": "Wilderness", "x": 3029, "y": 3630},
     {"name": "Graveyard of Shadows", "area": "Wilderness", "x": 3164, "y": 3672},

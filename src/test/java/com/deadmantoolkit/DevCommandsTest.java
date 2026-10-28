@@ -67,4 +67,17 @@ public class DevCommandsTest
 		assertFalse(action("events").isPresent());
 		assertFalse(action("events", "maybe").isPresent());
 	}
+
+	@Test
+	public void testStar()
+	{
+		DevCommands.Command c = DevCommands.parse(new String[]{"star", "7"}).get();
+		assertEquals(DevCommands.Action.STAR, c.getAction());
+		assertEquals(7, c.getTier());
+		assertFalse(action("star").isPresent());
+		assertFalse(action("star", "0").isPresent());
+		assertFalse(action("star", "10").isPresent());
+		assertFalse(action("star", "x").isPresent());
+		assertFalse(action("star", "7", "now").isPresent());
+	}
 }

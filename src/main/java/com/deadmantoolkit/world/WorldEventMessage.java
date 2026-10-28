@@ -22,7 +22,9 @@ public class WorldEventMessage
 {
 	public enum Kind
 	{
-		CHEST, BREACH;
+		CHEST, BREACH,
+		/** A crashed shooting star: seen in the game world, never broadcast ({@link Stars}). */
+		STAR;
 
 		/** The wire / log name: "chest" or "breach". */
 		public String id()

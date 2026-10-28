@@ -1,11 +1,12 @@
 # Deadman Tool Kit
 
-Grand Exchange prices, profit tracking and breach / chest markers for Old School RuneScape's **permanent Deadman world
-(345)**.
+Grand Exchange prices, profit tracking and breach, chest and shooting star markers for Old School RuneScape's
+**permanent Deadman world (345)**.
 
 Deadman has its own economy: the regular GE price guides don't apply there, and the market is thin. Deadman Tool Kit
 builds a shared world 345 price index from the trades of the players who use it, keeps track of your own trades and
-profit, and puts the game's breach and Deadman's Chest broadcasts on your map. It stays idle on every other world.
+profit, and puts the game's breach and Deadman's Chest broadcasts, and shooting stars, on your map. It stays idle on
+every other world.
 
 ## Features
 
@@ -36,6 +37,14 @@ means the broadcast only named a region, not an exact spot. The panel also count
 
 ![Minimap arrows](./images/minimap.png)
 
+### Shooting stars
+
+When you come across a crashed shooting star, it is marked on the map with its tier and, once someone has stood at it,
+its Deadman area ("Shooting star (T6, Guarded)"). With *Share guarded stars* (on once connected) or *Share unguarded
+stars* (off by default) on, the stars you stand at in those areas are shared, and everyone who is connected sees them. A star drops a
+tier every 7 minutes, so the marker counts down and disappears when the star is gone, or as soon as someone sees it
+disappear.
+
 ### Profit and history
 
 - Realized profit today, over 7 days and all time, per item. It's worked out on your computer from your own trades.
@@ -58,9 +67,11 @@ Under **Configuration > Deadman Tool Kit**, or the gear button in the panel.
 |---|---|---|
 | Connect to Deadman Tool Kit server | Off | Shows the shared market data and shares your trades |
 | Share my trades / Share world events | On | What is shared while connected |
+| Share guarded stars | On | Sends the stars you stand at in guarded or safe areas (it says you were there) |
+| Share unguarded stars | Off | The same for unguarded areas; stars others shared show either way |
 | Notify when undercut or outbid | Off | A RuneLite notification for your open offers |
 | Flag offers with no fill for (hours) | 6 | When an open offer counts as stale |
-| Chests / Breaches on the map | On | Each kind of marker can be turned off |
+| Chests / Breaches / Stars on the map | On | Each kind of marker can be turned off |
 | Arrows on the minimap | On | Events on the minimap: at their spot when close, otherwise as an arrow on the rim |
 | Hint arrow to the chest | Off | Points the game's hint arrow at the chest |
 | Switch to this panel for GE offers | On | Off: the item still opens here, but whatever panel is open stays on top (handy with another price plugin) |
@@ -72,8 +83,9 @@ Under **Configuration > Deadman Tool Kit**, or the gear button in the panel.
 - Nothing is sent anywhere until you press **Connect**. It is off by default, and RuneLite shows its standard
   third-party warning first.
 - Once connected, the plugin shares your own world 345 Grand Exchange trades and open offers (item, price, quantity,
-  time), and the breach and chest broadcasts you see. They are sent with a random install id and a hashed account id.
-  Your name is never sent, and the server never stores IP addresses.
+  time), the breach and chest broadcasts you see, and the shooting stars you find (their tile, tier and time, which
+  does say you were near them; kept 2 days). They are sent with a random install id, and trades also with a hashed
+  account id. Your name is never sent, and the server never stores IP addresses.
 - **Delete my shared data** in the panel removes everything your computer has shared. You can turn sharing off at any
   time.
 - The full privacy notice:
@@ -91,6 +103,10 @@ No. It only does anything on world 345, the permanent Deadman world.
 **Why is a marker in the wrong spot?**
 Broadcasts give a place name, not a tile, and the plugin looks the name up in a list of places. If a marker is wrong or
 missing, please report the broadcast text so the place can be added.
+
+## Credits
+
+Thanks to **Queen of S3X**.
 
 ## Feedback
 

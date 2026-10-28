@@ -103,10 +103,24 @@ public class WorldLocationsTest
 		r = loc.resolve("at the Tasakaal entrance");
 		assertEquals("Karuulm Slayer Dungeon", r.getPlace());
 		assertEquals(Accuracy.EXACT, r.getAccuracy());
+		// "... at northeast of River Amja!": a direction from the river's middle, approximate.
+		r = loc.resolve("northeast of River Amja");
+		assertEquals("River Amja", r.getPlace());
+		assertEquals(Accuracy.APPROXIMATE, r.getAccuracy());
+		assertTrue(r.getPoint().getX() > 2915 && r.getPoint().getY() > 3030);
 		// "... at within the Chicken Shrine!": in Zanaris, near its original entrance.
 		r = loc.resolve("within the Chicken Shrine");
 		assertEquals("Chicken Shrine", r.getPlace());
 		assertEquals(Accuracy.EXACT, r.getAccuracy());
+		// "... at within the Mausoleum!": the graveyard island off Fenkenstrain's Castle.
+		r = loc.resolve("within the Mausoleum");
+		assertEquals("Mausoleum", r.getPlace());
+		assertEquals(Accuracy.EXACT, r.getAccuracy());
+		// "... at southeast of Pyre Cove!": a direction from the Wilderness cove, approximate.
+		r = loc.resolve("southeast of Pyre Cove");
+		assertEquals("Pyre Cove", r.getPlace());
+		assertEquals(Accuracy.APPROXIMATE, r.getAccuracy());
+		assertTrue(r.getPoint().getX() > 3349 && r.getPoint().getY() < 3618);
 	}
 
 	@Test
@@ -273,5 +287,29 @@ public class WorldLocationsTest
 			// The game world, surface (Sailing islands reach y 2200) and underground (y up to about 10400).
 			assertTrue(p.getName(), w.getX() > 1000 && w.getX() < 4200 && w.getY() > 2000 && w.getY() < 12800);
 		}
+	}
+
+	@Test
+	public void aStarsSpotIsNamedByTheNearestLandmark()
+	{
+		assertEquals("near Varrock East Bank", loc.describe(new WorldPoint(3254, 3418, 0)));
+		// "East of the Rimmington Mine" is a chest's wording, not a landmark: the mine itself names the spot.
+		assertEquals("near Rimmington mine", loc.describe(new WorldPoint(2994, 3241, 0)));
+	}
+
+	@Test
+	public void farFromLandmarksTheRegionOrTheCoordinatesNameIt()
+	{
+		WorldPlaces.Place lumbridge = new WorldPlaces.Place("Lumbridge", Collections.emptyList(), new WorldPoint(3222, 3218, 0),
+			false, 8, null, null);
+		WorldPlaces.Place wording = new WorldPlaces.Place("North of Lumbridge", Collections.emptyList(),
+			new WorldPoint(3222, 3240, 0), false, 8, null, null);
+		WorldPlaces.Place misthalin = new WorldPlaces.Place("Misthalin", Collections.emptyList(), new WorldPoint(3210, 3330, 0),
+			true, 130, null, null);
+		WorldLocations small = new WorldLocations(new WorldPlaces.Table(1, Arrays.asList(lumbridge, wording, misthalin),
+			Collections.emptyList(), Collections.emptyList()));
+		assertEquals("near Lumbridge", small.describe(new WorldPoint(3222, 3241, 0)));
+		assertEquals("in Misthalin", small.describe(new WorldPoint(3210, 3300, 0)));
+		assertEquals("at 1000, 1000", small.describe(new WorldPoint(1000, 1000, 0)));
 	}
 }
