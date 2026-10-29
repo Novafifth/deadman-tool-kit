@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.util.Filepath;
+import okhttp3.HttpUrl;
 
 /**
  * Where this computer's install id and install token live: a small JSON file in the plugin's data folder, not the
@@ -31,6 +32,8 @@ final class IdentityFile implements InstallIdentity.Store
 
 	private final ProfitStore.Dir dir;
 	private final Gson gson;
+	/** {@link #FILE_NAME} for the production server, another name for any other server ({@link #fileNameFor}). */
+	private volatile String fileName = FILE_NAME;
 	private Map<String, String> values;
 	/**
 	 * The file is there but couldn't be read (locked by another program, no permission): this session works from memory
@@ -42,6 +45,31 @@ final class IdentityFile implements InstallIdentity.Store
 	{
 		this.dir = dir;
 		this.gson = gson;
+	}
+
+	/**
+	 * The file for {@code server}: the production server keeps {@value #FILE_NAME}, any other server (the local one the
+	 * developer-mode client uses) gets a file of its own. A test server that refuses the real token, and already knows
+	 * the install id, would otherwise make the plugin switch the real install to a new id.
+	 */
+	static String fileNameFor(HttpUrl server, HttpUrl production)
+	{
+		if (server.host().equals(production.host()) && server.port() == production.port())
+		{
+			return FILE_NAME;
+		}
+		return "server-identity-" + (server.host() + "-" + server.port()).replaceAll("[^A-Za-z0-9.-]", "_") + ".json";
+	}
+
+	/** Use the file {@code name} (from {@link #fileNameFor}) in the plugin folder. Call before the identity is used. */
+	void useFileName(String name)
+	{
+		if (!name.equals(fileName))
+		{
+			fileName = name;
+			values = null;
+			readOnly = false;
+		}
 	}
 
 	@Override
@@ -82,7 +110,7 @@ final class IdentityFile implements InstallIdentity.Store
 		Filepath file = null;
 		try
 		{
-			file = dir.get().joinSegment(FILE_NAME);
+			file = dir.get().joinSegment(fileName);
 		}
 		catch (IOException | RuntimeException ex)
 		{
@@ -165,8 +193,9 @@ final class IdentityFile implements InstallIdentity.Store
 			{
 				o.addProperty(e.getKey(), e.getValue());
 			}
-			Filepath file = d.joinSegment(FILE_NAME);
-			Filepath tmp = d.joinSegment(FILE_NAME + ".tmp");
+			String name = fileName;
+			Filepath file = d.joinSegment(name);
+			Filepath tmp = d.joinSegment(name + ".tmp");
 			try (BufferedWriter w = tmp.openBufferedWriter(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.WRITE))
 			{

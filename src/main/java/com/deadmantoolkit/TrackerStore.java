@@ -63,10 +63,14 @@ class TrackerStore implements ServerIdentity
 		this.identity = new InstallIdentity(identityFile, () -> UUID.randomUUID().toString());
 	}
 
-	/** Where the install id and token file lives (the plugin's data folder). Call before using the identity. */
-	void useDataDir(ProfitStore.Dir dir)
+	/**
+	 * Where the install id and token file lives (the plugin's data folder) and its name ({@link IdentityFile#fileNameFor}:
+	 * one per server). Call before using the identity.
+	 */
+	void useDataDir(ProfitStore.Dir dir, String identityFileName)
 	{
 		this.dataDir = dir;
+		identityFile.useFileName(identityFileName);
 	}
 
 	/** Reads the identity file now (off the client thread and the EDT: the executor at startUp). */

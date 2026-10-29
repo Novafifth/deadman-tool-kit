@@ -276,7 +276,8 @@ of uploading: it only happens while connected with *Share my trades* on. The ins
 `server-identity.json` in the plugin folder (`~/.runelite/plugin-data/deadman-tool-kit/`), not in the RuneLite
 config: RuneLite logs config values it saves at debug level, passes them to every plugin, and syncs the config to its
 servers for players with a RuneLite account. So the token is never written to a log or synced, and each computer has
-its own install id. The token only authorises this install's uploads and the deletion of its data. If the server refuses the token, the
+its own install id. A developer-mode client talking to another server (the local test server) keeps a separate file
+for it, `server-identity-<host>-<port>.json`, so testing never touches the real install id and token. The token only authorises this install's uploads and the deletion of its data. If the server refuses the token, the
 plugin registers once more; if the install id is taken it switches to a new random one, and remembers the old one
 (*Delete my shared data* lists it, since data shared under it can't be deleted from here any more). If the file can't
 be read when RuneLite starts (another program has it locked), the plugin never writes over it.

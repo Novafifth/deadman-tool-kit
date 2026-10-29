@@ -272,8 +272,9 @@ public class DeadmanToolKitPlugin extends Plugin
 		log.debug("Using collection server {}", base);
 		tracker = new OfferTracker(() -> UUID.randomUUID().toString());
 		// The install id and token live in a file in the plugin's folder (never in the config, which is logged, shared
-		// with other plugins and synced); read it now on the executor, off the client thread and the EDT.
-		store.useDataDir(this::getPluginDirectory);
+		// with other plugins and synced), one per server so a developer-mode client on a test server never touches the
+		// real ones; read it now on the executor, off the client thread and the EDT.
+		store.useDataDir(this::getPluginDirectory, IdentityFile.fileNameFor(base, HttpUrl.get(PRODUCTION_SERVER_URL)));
 		executor.execute(store::loadIdentity);
 		// Uploads carry the install token (registering first); nothing, registration included, is sent unless
 		// connected and sharing.

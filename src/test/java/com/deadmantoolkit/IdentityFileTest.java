@@ -20,6 +20,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.UUID;
 import net.runelite.client.util.Filepath;
+import okhttp3.HttpUrl;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,6 +67,36 @@ public class IdentityFileTest
 		assertNull(identity().token());
 		assertNotEquals(id, b.rotateInstallId());
 		assertNotEquals(id, identity().installId());
+	}
+
+	@Test
+	public void aTestServerNeverTouchesTheRealIdentity()
+	{
+		HttpUrl production = HttpUrl.get("https://example.run.app");
+		assertEquals(IdentityFile.FILE_NAME, IdentityFile.fileNameFor(HttpUrl.get("https://example.run.app/"), production));
+		String local = IdentityFile.fileNameFor(HttpUrl.get("http://localhost:8787"), production);
+		assertEquals("server-identity-localhost-8787.json", local);
+		assertEquals("server-identity-__1-8787.json", IdentityFile.fileNameFor(HttpUrl.get("http://[::1]:8787"), production));
+
+		InstallIdentity real = identity();
+		String id = real.installId();
+		String token = FakeServer.tok('p');
+		real.setToken(id, token);
+
+		// The test server refuses the real token and already knows the id: the plugin drops the token and switches
+		// to a new id, in the test server's file only.
+		IdentityFile testFile = new IdentityFile(this::dir, gson);
+		testFile.useFileName(local);
+		InstallIdentity test = new InstallIdentity(testFile, () -> UUID.randomUUID().toString());
+		String testId = test.installId();
+		test.clearToken(testId);
+		assertNotEquals(testId, test.replaceInstallId());
+		assertTrue(Files.isRegularFile(tmp.getRoot().toPath().resolve("deadman-tool-kit").resolve(local)));
+
+		InstallIdentity again = identity();
+		assertEquals(id, again.installId());
+		assertEquals(token, again.token());
+		assertTrue(again.lostInstallIds().isEmpty());
 	}
 
 	@Test
